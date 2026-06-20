@@ -10,7 +10,6 @@ import {
   Clock3,
   Crosshair,
   Grid3X3,
-  Layers3,
   MoveRight,
   PackageCheck,
   Ruler,
@@ -21,159 +20,200 @@ import {
 
 type Language = "ge" | "en";
 
+type HeroVisualCopy = {
+  alt: string;
+  rotation: string;
+  size: string;
+  slices: string;
+};
+
+const menuVisuals = [
+  "object-[52%_48%]",
+  "object-[42%_48%]",
+  "object-[64%_42%]",
+  "object-[38%_62%]",
+  "object-[58%_66%]",
+  "object-[50%_54%]",
+];
+
+const storyIcons = [Crosshair, Ruler, Grid3X3];
+const deliveryIcons = [PackageCheck, Timer, ShieldCheck];
+
 const translations = {
   ge: {
     nav: {
-      concept: "კუთხე",
-      thirty: "30×30",
+      angle: "90°",
+      format: "30×30",
       slices: "9 ნაჭერი",
+      menu: "მენიუ",
       delivery: "მიტანა",
-      order: "შეკვეთა მალე",
       homeLabel: "90pizza მთავარი",
     },
     hero: {
-      eyebrow: "geometry-driven pizza",
+      eyebrow: "geometry-driven delivery pizza",
       title: "90pizza",
-      slogan: "პიცა სწორი კუთხით",
+      headline: "პიცა სწორი კუთხით",
       body:
-        "არა რესტორნის გვერდი. ეს არის პროდუქტის გაშვება ოთხკუთხედი პიცისთვის: 90° კუთხე, 30×30 სმ ფორმატი და 9 თანაბარი ნაჭერი, შექმნილი სწრაფი მიტანისთვის.",
-      primary: "დაიწყე ისტორია",
-      secondary: "ნახე 90°",
-      metricA: "90°",
-      metricB: "30×30",
-      metricC: "9",
+        "თანამედროვე მიტანის ბრენდი, რომელიც პიცას უყურებს როგორც პროდუქტს: ზუსტი კუთხე, ოთხკუთხედი ფორმატი, 30×30 სმ და 9 თანაბარი ნაჭერი.",
+      menuCta: "მენიუს ნახვა",
+      woltCta: "მალე Wolt-ზე",
+      metrics: ["90° კუთხე", "30×30 სმ", "9 თანაბარი"],
     },
     visual: {
-      alt: "90pizza ოთხკუთხედი პიცა",
-      badgeTop: "scroll rotation",
-      badgeBottom: "90° system",
+      alt: "90pizza ოთხკუთხედი პიცა 9 ნაჭრად",
+      rotation: "ნელა ბრუნავს 90°",
       size: "30×30 სმ",
       slices: "9 თანაბარი ნაჭერი",
     },
-    intro: {
-      kicker: "ბრენდის სისტემა",
-      title: "კუთხე გახდა პროდუქტი.",
-      body:
-        "90pizza აშენებულია ერთ მარტივ წესზე: კვადრატი უფრო ზუსტად ჯდება ყუთში, უკეთ იყოფა და მიტანამდე ინარჩუნებს ფორმას.",
-      cards: [
-        ["90°", "იდენტობა", "მკვეთრი კუთხე, რომელიც ქმნის სახელს, ლოგოს და მოძრაობას."],
-        ["Square", "ფორმატი", "პიცა აღარ არის წრე. ის არის ზუსტი 30×30 სმ პროდუქტი."],
-        ["Delivery", "არხი", "ყოველი დეტალი გათვლილია აპიდან კარამდე გზისთვის."],
+    storytelling: {
+      kicker: "სქროლზე გაშლილი კონცეფცია",
+      intro: "სამი რიცხვი ქმნის მთლიან ბრენდს.",
+      blocks: [
+        {
+          value: "90°",
+          label: "სწორი კუთხე, სწორი გემო",
+          detail: "ბრენდის მთავარი ნიშანი არის კუთხე: მკაფიო, დასამახსოვრებელი და მოძრაობაში ცოცხალი.",
+        },
+        {
+          value: "30×30",
+          label: "ოთხკუთხედი ფორმატი მიტანისთვის",
+          detail: "ზომა, რომელიც ჯდება ყუთში, იკითხება ეკრანზე და გზაში ინარჩუნებს ფორმას.",
+        },
+        {
+          value: "9 ნაჭერი",
+          label: "თანაბარი ნაჭრები ყველასთვის",
+          detail: "3×3 სისტემა პიცას აქცევს გასაზიარებელ ინტერფეისად.",
+        },
       ],
     },
-    thirty: {
-      kicker: "30×30 სმ",
-      title: "ზომა, რომელიც ახსოვს თვალს.",
+    cut: {
+      kicker: "pizza cut animation",
+      title: "ერთი კვადრატი იყოფა ცხრა თანაბარ ნაწილად.",
       body:
-        "კომპაქტური, გაზომვადი და ყუთზე მორგებული. 30×30 სმ ქმნის პროდუქტს, რომელიც კარგად ჩანს ეკრანზე და კარგად მოგზაურობს ქალაქში.",
-      labels: ["ზუსტი კიდე", "თანაბარი დაფარვა", "ყუთზე მორგება"],
-    },
-    slices: {
-      kicker: "9 თანაბარი ნაჭერი",
-      title: "3×3 grid. არანაირი pizza math.",
-      body:
-        "ნაჭრები ჩნდება როგორც ინტერფეისი: თანაბარი, წაკითხვადი და გაზიარებისთვის მზად. ეს არის პიცა, რომელსაც აქვს სისტემა.",
-      cells: ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        "ხაზები ჩნდება როგორც პროდუქტის ინტერფეისი: ორი ვერტიკალური, ორი ჰორიზონტალური და ზუსტი 9 ნაჭერი.",
+      center: "9",
+      note: "equal slices",
     },
     delivery: {
-      kicker: "delivery-first",
+      kicker: "delivery-first culture",
       title: "შექმნილია სწრაფი მიტანისთვის",
       body:
-        "90pizza არ იწყება მაგიდით. ის იწყება ყუთით, კურიერის მოძრაობით და იმ მომენტით, როცა მომხმარებელი აპში ხედავს სრულყოფილ კვადრატს.",
+        "90pizza იწყება არა მაგიდით, არამედ მარშრუტით: ყუთი, სითბო, აპში ხილვადობა და სწრაფი handoff.",
       cards: [
-        ["Box-fit", "30×30 ფორმატი ყუთში ზედმეტი მოძრაობის გარეშე ჯდება."],
-        ["Heat route", "მოკლე გზა სამზარეულოდან კარამდე, ფორმის დაკარგვის გარეშე."],
-        ["App-ready", "წითელი, შავი და კვადრატი მიტანის აპებში მყისიერად იკითხება."],
+        ["Box precision", "30×30 ფორმატი ყუთში ზედმეტი მოძრაობის გარეშე ჯდება."],
+        ["Fast handoff", "მოკლე გზა სამზარეულოდან კარამდე, სუფთა ფორმით."],
+        ["App signal", "წითელი წრე, თეთრი კუთხე და კვადრატი მყისიერად იკითხება."],
       ],
-      partners: ["Wolt", "Glovo"],
-      soon: "მალე",
+      partners: [
+        ["Wolt", "მალე"],
+        ["Glovo", "მალე"],
+      ],
     },
-    story: {
-      kicker: "10-second memory",
-      title: "ნახავ წითელ წრეს, თეთრ კუთხეს და კვადრატულ პიცას. ბრენდი უკვე დაიმახსოვრე.",
-      body:
-        "ეს არის 90pizza-ს იდეა: ერთი გეომეტრიული სიგნალი, ერთი პროდუქტის ფორმა და ერთი მარტივი დაპირება: პიცა, რომელიც სწორად არის დაპროექტებული მიტანისთვის.",
+    menu: {
+      kicker: "menu system",
+      title: "ექვსი კვადრატი. ერთი ზუსტი ფორმატი.",
+      body: "მენიუ რჩება პროდუქტის ნაწილად: ყოველი პიცა არის 30×30, დაჭრილი 9 თანაბარ ნაჭრად.",
+      items: [
+        ["ნაინთი მარგარიტა", "Ninety Margherita", "სან მარცანო, ფიორ დი ლატე, ბაზილიკის ზეთი", "24 ₾"],
+        ["პეპერონი გრიდი", "Pepperoni Grid", "პეპერონი, მოცარელა, ჩილის თაფლი", "29 ₾"],
+        ["კრაფტ მაშრუმი", "Kraft Mushroom", "შემწვარი სოკო, სკამორცა, ნივრის კრემი", "27 ₾"],
+        ["რედ ქორნერი", "Red Corner", "ნდუჯა, სტრაჩატელა, წითელი ხახვი", "31 ₾"],
+        ["უაით სქუერი", "White Square", "რიკოტა, ნიორი, მოცარელა, ლიმონი", "26 ₾"],
+        ["დელივერი დელუქსი", "Delivery Deluxe", "პროშუტო, ზეთისხილი, წიწაკა, ყველი", "32 ₾"],
+      ],
     },
     footer: {
-      line: "90° angle / square pizza / 30×30 cm / 9 slices",
-      badge: "პიცა სწორი კუთხით",
+      slogan: "პიცა სწორი კუთხით",
+      instagram: "Instagram",
+      language: "GE / EN",
     },
   },
   en: {
     nav: {
-      concept: "Angle",
-      thirty: "30x30",
+      angle: "90°",
+      format: "30x30",
       slices: "9 slices",
+      menu: "Menu",
       delivery: "Delivery",
-      order: "Order soon",
       homeLabel: "90pizza home",
     },
     hero: {
-      eyebrow: "geometry-driven pizza",
+      eyebrow: "geometry-driven delivery pizza",
       title: "90pizza",
-      slogan: "Pizza at the right angle",
+      headline: "Pizza at the right angle",
       body:
-        "Not a restaurant website. A product launch for square pizza: a 90 degree angle, a 30x30 cm format, and 9 equal slices engineered for delivery.",
-      primary: "Start the story",
-      secondary: "See the 90",
-      metricA: "90°",
-      metricB: "30x30",
-      metricC: "9",
+        "A modern delivery brand that treats pizza like a product: a precise angle, a square format, 30x30 cm, and 9 equal slices.",
+      menuCta: "View menu",
+      woltCta: "Soon on Wolt",
+      metrics: ["90° angle", "30x30 cm", "9 equal"],
     },
     visual: {
-      alt: "90pizza square pizza",
-      badgeTop: "scroll rotation",
-      badgeBottom: "90° system",
+      alt: "90pizza square pizza cut into 9 slices",
+      rotation: "slow 90° rotation",
       size: "30x30 cm",
       slices: "9 equal slices",
     },
-    intro: {
-      kicker: "Brand system",
-      title: "The angle became the product.",
-      body:
-        "90pizza is built on one simple rule: a square fits the box with more precision, divides cleaner, and keeps its shape on the way to the door.",
-      cards: [
-        ["90°", "Identity", "The sharp angle that drives the name, logo, and motion language."],
-        ["Square", "Format", "Pizza is no longer a circle. It is a precise 30x30 cm product."],
-        ["Delivery", "Channel", "Every detail is designed for the path from app to doorstep."],
+    storytelling: {
+      kicker: "scroll storytelling",
+      intro: "Three numbers build the whole brand.",
+      blocks: [
+        {
+          value: "90°",
+          label: "The right angle. The right taste.",
+          detail: "The core brand signal is an angle: sharp, memorable, and alive in motion.",
+        },
+        {
+          value: "30x30",
+          label: "A square format made for delivery",
+          detail: "A size that fits the box, reads on screen, and keeps its structure in motion.",
+        },
+        {
+          value: "9 slices",
+          label: "Equal slices for everyone",
+          detail: "The 3x3 system turns pizza into a shareable interface.",
+        },
       ],
     },
-    thirty: {
-      kicker: "30x30 cm",
-      title: "A size the eye remembers.",
+    cut: {
+      kicker: "pizza cut animation",
+      title: "One square becomes nine equal parts.",
       body:
-        "Compact, measurable, and box-native. 30x30 cm creates a product that looks sharp on screen and travels cleanly through the city.",
-      labels: ["Measured edge", "Even coverage", "Box-native fit"],
-    },
-    slices: {
-      kicker: "9 equal slices",
-      title: "3x3 grid. No pizza math.",
-      body:
-        "Slices appear like an interface: equal, readable, and ready to share. This is pizza with a system.",
-      cells: ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        "Lines appear like a product interface: two vertical, two horizontal, and a precise 9-slice grid.",
+      center: "9",
+      note: "equal slices",
     },
     delivery: {
-      kicker: "delivery-first",
-      title: "Engineered for fast delivery",
+      kicker: "delivery-first culture",
+      title: "Built for fast delivery",
       body:
-        "90pizza does not start with a table. It starts with the box, the courier route, and the moment a customer sees a perfect square in the app.",
+        "90pizza starts with the route, not the table: box, heat, app visibility, and a fast handoff.",
       cards: [
-        ["Box-fit", "The 30x30 format sits in the box without wasted movement."],
-        ["Heat route", "A shorter path from oven to door without losing structure."],
-        ["App-ready", "Red, black, and square read instantly inside delivery apps."],
+        ["Box precision", "The 30x30 format sits in the box without wasted movement."],
+        ["Fast handoff", "A short path from kitchen to door while keeping its structure."],
+        ["App signal", "The red circle, white angle, and square read instantly."],
       ],
-      partners: ["Wolt", "Glovo"],
-      soon: "Soon",
+      partners: [
+        ["Wolt", "Soon"],
+        ["Glovo", "Soon"],
+      ],
     },
-    story: {
-      kicker: "10-second memory",
-      title: "You see the red circle, the white angle, and the square pizza. The brand is already remembered.",
-      body:
-        "That is the 90pizza idea: one geometric signal, one product shape, and one simple promise: pizza designed correctly for delivery.",
+    menu: {
+      kicker: "menu system",
+      title: "Six squares. One precise format.",
+      body: "The menu stays part of the product system: every pizza is 30x30, cut into 9 equal slices.",
+      items: [
+        ["Ninety Margherita", "ნაინთი მარგარიტა", "San Marzano, fior di latte, basil oil", "24 GEL"],
+        ["Pepperoni Grid", "პეპერონი გრიდი", "Pepperoni, mozzarella, chili honey", "29 GEL"],
+        ["Kraft Mushroom", "კრაფტ მაშრუმი", "Roasted mushrooms, scamorza, garlic cream", "27 GEL"],
+        ["Red Corner", "რედ ქორნერი", "Nduja, stracciatella, red onion", "31 GEL"],
+        ["White Square", "უაით სქუერი", "Ricotta, garlic, mozzarella, lemon", "26 GEL"],
+        ["Delivery Deluxe", "დელივერი დელუქსი", "Prosciutto, olives, peppers, aged cheese", "32 GEL"],
+      ],
     },
     footer: {
-      line: "90° angle / square pizza / 30x30 cm / 9 slices",
-      badge: "Pizza at the right angle",
+      slogan: "Pizza at the right angle",
+      instagram: "Instagram",
+      language: "GE / EN",
     },
   },
 };
@@ -193,7 +233,7 @@ function LanguageSwitcher({
           type="button"
           onClick={() => setLang(language)}
           aria-pressed={lang === language}
-          className={`px-3 py-2 text-xs font-black uppercase tracking-[0.14em] transition ${
+          className={`px-3 py-2 text-xs font-black uppercase transition ${
             lang === language ? "bg-pizzaRed text-white" : "text-white/50 hover:text-white"
           }`}
         >
@@ -204,56 +244,58 @@ function LanguageSwitcher({
   );
 }
 
-function Kicker({ children }: { children: React.ReactNode }) {
+function Kicker({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
   return (
-    <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-pizzaRed">
-      <span className="h-px w-8 bg-pizzaRed" />
+    <p className={`inline-flex items-center gap-3 text-xs font-black uppercase ${light ? "text-white/62" : "text-pizzaRed"}`}>
+      <span className={`h-px w-9 ${light ? "bg-white/40" : "bg-pizzaRed"}`} />
       {children}
     </p>
   );
 }
 
-function HeroProduct({
+function HeroPizza({
   copy,
   rotate,
   scale,
 }: {
-  copy: (typeof translations)["ge"]["visual"];
+  copy: HeroVisualCopy;
   rotate: MotionValue<number>;
   scale: MotionValue<number>;
 }) {
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[640px]">
+    <div className="relative mx-auto aspect-square w-full max-w-[620px]">
       <motion.div
-        className="absolute inset-[3%] border border-white/10 bg-white/[0.03]"
+        className="absolute inset-[2%] border border-white/10 bg-white/[0.025]"
         style={{ rotate, scale }}
       />
       <motion.div
-        className="absolute inset-[9%] border border-pizzaRed/40"
+        className="absolute inset-[8%] border border-pizzaRed/45"
         style={{ rotate, scale }}
       />
       <motion.div
-        className="absolute inset-[15%] overflow-hidden bg-pizzaBlack shadow-[0_40px_140px_rgba(224,16,16,0.32)]"
+        className="absolute inset-[14%] overflow-hidden bg-pizzaBlack shadow-[0_42px_150px_rgba(224,16,16,0.34)]"
         style={{ rotate, scale }}
+        animate={{ rotate: [0, 90, 0] }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       >
         <Image
           src="/images/square-pizza-hero.png"
           alt={copy.alt}
           fill
           priority
-          sizes="(max-width: 768px) 92vw, 640px"
+          sizes="(max-width: 768px) 92vw, 620px"
           className="object-cover"
         />
-        <div className="slice-grid absolute inset-0 opacity-45" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/45 via-transparent to-white/20" />
+        <div className="slice-grid absolute inset-0 opacity-42" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-white/18" />
       </motion.div>
       <motion.div
-        className="absolute left-0 top-10 border border-white/10 bg-black/70 px-4 py-3 text-white backdrop-blur-xl"
+        className="absolute left-0 top-10 border border-white/10 bg-black/72 px-4 py-3 text-white backdrop-blur-xl"
         initial={{ opacity: 0, x: -18 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.5, duration: 0.6 }}
       >
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-white/45">{copy.badgeTop}</p>
+        <p className="text-xs font-black uppercase text-white/45">{copy.rotation}</p>
         <p className="mt-1 text-2xl font-black text-pizzaRed">90°</p>
       </motion.div>
       <motion.div
@@ -266,13 +308,10 @@ function HeroProduct({
         <p className="text-xs font-bold text-pizzaBlack/55">{copy.slices}</p>
       </motion.div>
       <motion.div
-        className="absolute right-4 top-0 bg-pizzaRed px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-white"
-        initial={{ opacity: 0, y: -18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.78, duration: 0.6 }}
-      >
-        {copy.badgeBottom}
-      </motion.div>
+        className="absolute -right-2 top-0 h-20 w-20 border-r-4 border-t-4 border-pizzaRed"
+        animate={{ rotate: [0, 90, 0] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+      />
     </div>
   );
 }
@@ -281,32 +320,39 @@ export default function LandingPage() {
   const [lang, setLang] = useState<Language>("ge");
   const t = translations[lang];
   const heroRef = useRef<HTMLElement>(null);
-  const slicesRef = useRef<HTMLElement>(null);
+  const cutRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll();
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const { scrollYProgress: slicesProgress } = useScroll({
-    target: slicesRef,
+  const { scrollYProgress: cutProgress } = useScroll({
+    target: cutRef,
     offset: ["start end", "end center"],
   });
   const pizzaRotate = useTransform(heroProgress, [0, 1], [0, 90]);
-  const pizzaScale = useTransform(heroProgress, [0, 1], [1, 0.82]);
-  const heroTextY = useTransform(heroProgress, [0, 1], [0, -120]);
+  const pizzaScale = useTransform(heroProgress, [0, 1], [1, 0.84]);
+  const heroTextY = useTransform(heroProgress, [0, 1], [0, -110]);
   const orbitRotate = useTransform(scrollYProgress, [0, 1], [0, 180]);
-  const gridOpacity = useTransform(slicesProgress, [0, 0.4, 1], [0.12, 1, 1]);
+  const cutLineScale = useTransform(cutProgress, [0, 0.55, 1], [0, 1, 1]);
+  const cutCellOpacity = useTransform(cutProgress, [0, 0.35, 1], [0.18, 0.72, 1]);
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#050505] text-white">
-      <section ref={heroRef} className="relative min-h-[180vh] bg-[#050505]">
+    <main className="min-h-screen overflow-hidden bg-pizzaBlack text-white">
+      <section ref={heroRef} className="relative min-h-[175vh] bg-pizzaBlack">
         <div className="sticky top-0 min-h-screen overflow-hidden">
           <div className="absolute inset-0 bg-geometry-field" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_24%,rgba(224,16,16,0.28),transparent_32%)]" />
           <motion.div
-            className="absolute left-1/2 top-1/2 h-[86vmin] w-[86vmin] -translate-x-1/2 -translate-y-1/2 border border-pizzaRed/25"
+            className="absolute left-1/2 top-1/2 h-[78vmin] w-[78vmin] -translate-x-1/2 -translate-y-1/2 border border-pizzaRed/22"
             style={{ rotate: orbitRotate }}
           />
-          <div className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-black/40 backdrop-blur-xl">
+          <motion.div
+            className="absolute bottom-[10%] left-[7%] h-24 w-24 border-b-4 border-l-4 border-white/12"
+            style={{ rotate: orbitRotate }}
+          />
+
+          <div className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-black/44 backdrop-blur-xl">
             <nav className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-4 sm:px-8">
               <a href="#" className="flex items-center gap-3" aria-label={t.nav.homeLabel}>
                 <Image
@@ -317,39 +363,23 @@ export default function LandingPage() {
                   priority
                   className="h-11 w-11 rounded-full object-cover"
                 />
-                <span className="text-lg font-black tracking-tight">90pizza</span>
+                <span className="text-lg font-black">90pizza</span>
               </a>
-              <div className="hidden items-center gap-7 text-xs font-black uppercase tracking-[0.18em] text-white/46 md:flex">
-                <a href="#angle" className="transition hover:text-white">
-                  {t.nav.concept}
-                </a>
-                <a href="#thirty" className="transition hover:text-white">
-                  {t.nav.thirty}
-                </a>
-                <a href="#slices" className="transition hover:text-white">
-                  {t.nav.slices}
-                </a>
-                <a href="#delivery" className="transition hover:text-white">
-                  {t.nav.delivery}
-                </a>
+              <div className="hidden items-center gap-7 text-xs font-black uppercase text-white/48 md:flex">
+                <a href="#story" className="transition hover:text-white">{t.nav.angle}</a>
+                <a href="#story" className="transition hover:text-white">{t.nav.format}</a>
+                <a href="#cut" className="transition hover:text-white">{t.nav.slices}</a>
+                <a href="#menu" className="transition hover:text-white">{t.nav.menu}</a>
+                <a href="#delivery" className="transition hover:text-white">{t.nav.delivery}</a>
               </div>
-              <div className="flex items-center gap-2">
-                <LanguageSwitcher lang={lang} setLang={setLang} />
-                <a
-                  href="#delivery"
-                  className="hidden items-center gap-2 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-black transition hover:bg-pizzaRed hover:text-white sm:inline-flex"
-                >
-                  {t.nav.order}
-                  <ArrowUpRight className="h-4 w-4" />
-                </a>
-              </div>
+              <LanguageSwitcher lang={lang} setLang={setLang} />
             </nav>
           </div>
 
-          <div className="relative z-10 mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-5 pb-12 pt-28 sm:px-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="relative z-10 mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-5 pb-12 pt-28 sm:px-8 lg:grid-cols-[0.92fr_1.08fr]">
             <motion.div style={{ y: heroTextY }} className="max-w-3xl">
               <motion.p
-                className="mb-5 inline-flex items-center gap-2 border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-white/64 backdrop-blur-xl"
+                className="mb-5 inline-flex items-center gap-2 border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white/64 backdrop-blur-xl"
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55 }}
@@ -358,7 +388,7 @@ export default function LandingPage() {
                 {t.hero.eyebrow}
               </motion.p>
               <motion.h1
-                className="text-[clamp(4.8rem,18vw,13rem)] font-black leading-[0.76] tracking-normal"
+                className="text-7xl font-black leading-[0.78] sm:text-8xl lg:text-9xl"
                 initial={{ opacity: 0, y: 34 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.08, duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
@@ -371,10 +401,10 @@ export default function LandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.16, duration: 0.62 }}
               >
-                {t.hero.slogan}
+                {t.hero.headline}
               </motion.p>
               <motion.p
-                className="mt-6 max-w-xl text-base leading-8 text-white/62 sm:text-lg"
+                className="mt-6 max-w-xl text-base leading-8 text-white/64 sm:text-lg"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.24, duration: 0.62 }}
@@ -388,160 +418,117 @@ export default function LandingPage() {
                 transition={{ delay: 0.32, duration: 0.58 }}
               >
                 <a
-                  href="#angle"
-                  className="inline-flex items-center justify-center gap-2 bg-pizzaRed px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-redGlow transition hover:bg-white hover:text-black"
+                  href="#menu"
+                  className="inline-flex items-center justify-center gap-2 bg-pizzaRed px-5 py-4 text-sm font-black uppercase text-white shadow-redGlow transition hover:bg-white hover:text-black"
                 >
-                  {t.hero.primary}
+                  {t.hero.menuCta}
                   <MoveRight className="h-4 w-4" />
                 </a>
                 <a
-                  href="#thirty"
-                  className="inline-flex items-center justify-center gap-2 border border-white/15 bg-white/5 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white backdrop-blur-xl transition hover:border-pizzaRed hover:text-pizzaRed"
+                  href="#delivery"
+                  className="inline-flex items-center justify-center gap-2 border border-white/15 bg-white/5 px-5 py-4 text-sm font-black uppercase text-white backdrop-blur-xl transition hover:border-pizzaRed hover:text-pizzaRed"
                 >
-                  {t.hero.secondary}
-                  <Crosshair className="h-4 w-4" />
+                  {t.hero.woltCta}
+                  <ArrowUpRight className="h-4 w-4" />
                 </a>
               </motion.div>
               <div className="mt-10 grid max-w-xl grid-cols-3 border-y border-white/10">
-                {[t.hero.metricA, t.hero.metricB, t.hero.metricC].map((metric) => (
+                {t.hero.metrics.map((metric) => (
                   <div key={metric} className="py-5">
-                    <p className="text-3xl font-black text-white sm:text-4xl">{metric}</p>
+                    <p className="text-sm font-black uppercase text-white/58 sm:text-base">{metric}</p>
                   </div>
                 ))}
               </div>
             </motion.div>
 
-            <HeroProduct copy={t.visual} rotate={pizzaRotate} scale={pizzaScale} />
+            <HeroPizza copy={t.visual} rotate={pizzaRotate} scale={pizzaScale} />
           </div>
         </div>
       </section>
 
-      <section id="angle" className="relative bg-[#050505] px-5 py-24 sm:px-8 lg:py-36">
+      <section id="story" className="relative bg-pizzaBlack px-5 py-24 sm:px-8 lg:py-36">
         <div className="absolute inset-0 bg-dark-grid opacity-70" />
         <div className="relative mx-auto max-w-7xl">
-          <div className="grid gap-12 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-120px" }}
-              transition={{ duration: 0.6 }}
-            >
-              <Kicker>{t.intro.kicker}</Kicker>
-              <h2 className="mt-5 max-w-2xl text-5xl font-black leading-none sm:text-7xl">
-                {t.intro.title}
-              </h2>
-            </motion.div>
-            <motion.p
-              className="max-w-2xl text-lg leading-9 text-white/62"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-120px" }}
-              transition={{ delay: 0.08, duration: 0.6 }}
-            >
-              {t.intro.body}
-            </motion.p>
-          </div>
-          <div className="mt-14 grid gap-4 md:grid-cols-3">
-            {t.intro.cards.map(([value, label, detail], index) => (
-              <motion.article
-                key={value}
-                className="min-h-72 border border-white/10 bg-white/[0.035] p-6 backdrop-blur-xl transition hover:-translate-y-1 hover:border-pizzaRed/70 hover:bg-white/[0.06]"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-120px" }}
-                transition={{ delay: index * 0.08, duration: 0.55 }}
-              >
-                <p className="text-6xl font-black text-pizzaRed">{value}</p>
-                <p className="mt-8 text-xs font-black uppercase tracking-[0.2em] text-white/45">
-                  {label}
-                </p>
-                <p className="mt-4 text-sm font-semibold leading-7 text-white/62">{detail}</p>
-              </motion.article>
-            ))}
+          <Kicker>{t.storytelling.kicker}</Kicker>
+          <h2 className="mt-5 max-w-4xl text-5xl font-black leading-none sm:text-7xl">
+            {t.storytelling.intro}
+          </h2>
+          <div className="mt-14 grid gap-5">
+            {t.storytelling.blocks.map((block, index) => {
+              const Icon = storyIcons[index];
+
+              return (
+                <motion.article
+                  key={block.value}
+                  className="group relative overflow-hidden border border-white/10 bg-white/[0.035] p-6 backdrop-blur-xl md:grid md:grid-cols-[0.46fr_0.54fr] md:p-8"
+                  initial={{ opacity: 0, y: 36 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-120px" }}
+                  transition={{ delay: index * 0.08, duration: 0.58 }}
+                >
+                  <div className="absolute right-6 top-6 h-16 w-16 border-r-4 border-t-4 border-pizzaRed/60 transition group-hover:rotate-90" />
+                  <div>
+                    <Icon className="h-7 w-7 text-pizzaRed" />
+                    <p className="mt-10 text-7xl font-black leading-none text-pizzaRed sm:text-8xl">
+                      {block.value}
+                    </p>
+                  </div>
+                  <div className="mt-8 md:mt-0 md:self-end">
+                    <h3 className="text-3xl font-black leading-tight sm:text-5xl">{block.label}</h3>
+                    <p className="mt-5 max-w-xl text-base leading-8 text-white/62">{block.detail}</p>
+                  </div>
+                </motion.article>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section id="thirty" className="relative overflow-hidden bg-white px-5 py-24 text-black sm:px-8 lg:py-36">
-        <div className="absolute inset-0 bg-paper-grid opacity-80" />
-        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_0.78fr] lg:items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 34 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-120px" }}
-            transition={{ duration: 0.62 }}
-          >
-            <Kicker>{t.thirty.kicker}</Kicker>
-            <h2 className="mt-5 text-[clamp(5rem,22vw,18rem)] font-black leading-[0.78] tracking-normal text-black">
-              30×30
-            </h2>
-            <p className="mt-8 max-w-2xl text-3xl font-black leading-tight sm:text-5xl">
-              {t.thirty.title}
-            </p>
-            <p className="mt-6 max-w-xl text-base leading-8 text-black/62">{t.thirty.body}</p>
-          </motion.div>
-          <motion.div
-            className="relative aspect-square border-[18px] border-black bg-pizzaRed p-5 shadow-[0_40px_120px_rgba(0,0,0,0.22)]"
-            initial={{ opacity: 0, rotate: -8, scale: 0.88 }}
-            whileInView={{ opacity: 1, rotate: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-120px" }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="h-full w-full border border-white/55 bg-black/10" />
-            <div className="absolute inset-x-5 top-1/2 h-px bg-white/80" />
-            <div className="absolute inset-y-5 left-1/2 w-px bg-white/80" />
-            <div className="absolute -bottom-4 -right-4 bg-black px-5 py-4 text-sm font-black uppercase tracking-[0.16em] text-white">
-              30 cm / 30 cm
-            </div>
-          </motion.div>
-        </div>
-        <div className="relative mx-auto mt-12 grid max-w-7xl gap-3 md:grid-cols-3">
-          {t.thirty.labels.map((label, index) => (
-            <motion.div
-              key={label}
-              className="border border-black/10 bg-black px-5 py-5 text-sm font-black uppercase tracking-[0.16em] text-white"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ delay: index * 0.08, duration: 0.5 }}
-            >
-              {label}
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <section ref={slicesRef} id="slices" className="relative bg-[#050505] px-5 py-24 sm:px-8 lg:py-36">
-        <div className="absolute inset-0 bg-dark-grid opacity-70" />
-        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.75fr_1fr] lg:items-center">
+      <section ref={cutRef} id="cut" className="relative bg-white px-5 py-24 text-black sm:px-8 lg:py-36">
+        <div className="absolute inset-0 bg-paper-grid opacity-90" />
+        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.78fr_1fr] lg:items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-120px" }}
             transition={{ duration: 0.6 }}
           >
-            <Kicker>{t.slices.kicker}</Kicker>
+            <Kicker>{t.cut.kicker}</Kicker>
             <h2 className="mt-5 max-w-2xl text-5xl font-black leading-none sm:text-7xl">
-              {t.slices.title}
+              {t.cut.title}
             </h2>
-            <p className="mt-6 max-w-xl text-base leading-8 text-white/62">{t.slices.body}</p>
+            <p className="mt-6 max-w-xl text-base leading-8 text-black/62">{t.cut.body}</p>
           </motion.div>
-          <motion.div className="grid aspect-square grid-cols-3 gap-3" style={{ opacity: gridOpacity }}>
-            {t.slices.cells.map((cell, index) => (
+
+          <motion.div className="relative aspect-square bg-pizzaBlack p-4 shadow-[0_42px_120px_rgba(17,17,17,0.22)]" style={{ opacity: cutCellOpacity }}>
+            <div className="absolute inset-4 overflow-hidden">
+              <Image
+                src="/images/square-pizza-hero.png"
+                alt=""
+                fill
+                sizes="(max-width: 768px) 92vw, 620px"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-black/18" />
+            </div>
+            {[1, 2].map((line) => (
               <motion.div
-                key={cell}
-                className="relative overflow-hidden border border-white/10 bg-white/[0.04]"
-                initial={{ opacity: 0, scale: 0.72, rotate: -6 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true, margin: "-120px" }}
-                transition={{ delay: index * 0.055, duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(224,16,16,0.38),transparent_58%)]" />
-                <span className="absolute bottom-3 left-4 text-4xl font-black text-white/80">
-                  {cell}
-                </span>
-              </motion.div>
+                key={`v-${line}`}
+                className="absolute bottom-4 top-4 w-1 bg-white shadow-[0_0_20px_rgba(255,255,255,0.8)]"
+                style={{ left: `${(line / 3) * 100}%`, scaleY: cutLineScale }}
+              />
             ))}
+            {[1, 2].map((line) => (
+              <motion.div
+                key={`h-${line}`}
+                className="absolute left-4 right-4 h-1 bg-white shadow-[0_0_20px_rgba(255,255,255,0.8)]"
+                style={{ top: `${(line / 3) * 100}%`, scaleX: cutLineScale }}
+              />
+            ))}
+            <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center bg-pizzaRed text-white shadow-redGlow">
+              <p className="text-5xl font-black">{t.cut.center}</p>
+              <p className="text-xs font-black uppercase">{t.cut.note}</p>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -573,27 +560,29 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-14 grid gap-4 md:grid-cols-3">
-            {[PackageCheck, Timer, ShieldCheck].map((Icon, index) => (
-              <motion.article
-                key={t.delivery.cards[index][0]}
-                className="group min-h-72 border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition hover:-translate-y-2 hover:border-pizzaRed"
-                initial={{ opacity: 0, y: 34 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-120px" }}
-                transition={{ delay: index * 0.08, duration: 0.55 }}
-                whileHover={{ rotate: index === 1 ? -1.5 : 1.5 }}
-              >
-                <Icon className="h-8 w-8 text-pizzaRed" />
-                <p className="mt-16 text-3xl font-black">{t.delivery.cards[index][0]}</p>
-                <p className="mt-4 text-sm font-semibold leading-7 text-white/58">
-                  {t.delivery.cards[index][1]}
-                </p>
-              </motion.article>
-            ))}
+            {t.delivery.cards.map((card, index) => {
+              const Icon = deliveryIcons[index];
+
+              return (
+                <motion.article
+                  key={card[0]}
+                  className="group min-h-72 border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition hover:-translate-y-2 hover:border-pizzaRed"
+                  initial={{ opacity: 0, y: 34 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-120px" }}
+                  transition={{ delay: index * 0.08, duration: 0.55 }}
+                  whileHover={{ rotate: index === 1 ? -1.5 : 1.5 }}
+                >
+                  <Icon className="h-8 w-8 text-pizzaRed" />
+                  <p className="mt-16 text-3xl font-black">{card[0]}</p>
+                  <p className="mt-4 text-sm font-semibold leading-7 text-white/58">{card[1]}</p>
+                </motion.article>
+              );
+            })}
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {t.delivery.partners.map((partner, index) => (
+            {t.delivery.partners.map(([partner, soon], index) => (
               <motion.div
                 key={partner}
                 className="flex items-center justify-between border border-white/10 bg-white px-5 py-5 text-black"
@@ -608,31 +597,58 @@ export default function LandingPage() {
                   </span>
                   <p className="text-3xl font-black">{partner}</p>
                 </div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">
-                  {t.delivery.soon}
-                </p>
+                <p className="text-xs font-black uppercase text-black/45">{soon}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="relative bg-pizzaRed px-5 py-24 text-white sm:px-8 lg:py-36">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.16)_1px,transparent_1px)] bg-[size:90px_90px]" />
-        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.7fr_1fr] lg:items-center">
-          <div>
-            <Kicker>{t.story.kicker}</Kicker>
-            <p className="mt-6 max-w-sm text-base font-semibold leading-8 text-white/76">{t.story.body}</p>
+      <section id="menu" className="relative bg-pizzaBlack px-5 py-24 text-white sm:px-8 lg:py-36">
+        <div className="absolute inset-0 bg-dark-grid opacity-70" />
+        <div className="relative mx-auto max-w-7xl">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <Kicker>{t.menu.kicker}</Kicker>
+              <h2 className="mt-5 max-w-3xl text-5xl font-black leading-none sm:text-7xl">
+                {t.menu.title}
+              </h2>
+            </div>
+            <p className="max-w-2xl text-lg leading-9 text-white/62">{t.menu.body}</p>
           </div>
-          <motion.h2
-            className="text-5xl font-black leading-[0.94] sm:text-7xl lg:text-8xl"
-            initial={{ opacity: 0, y: 32 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-120px" }}
-            transition={{ duration: 0.65 }}
-          >
-            {t.story.title}
-          </motion.h2>
+
+          <div className="mt-14 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {t.menu.items.map(([name, translation, detail, price], index) => (
+              <motion.article
+                key={name}
+                className="group border border-white/10 bg-white p-4 text-pizzaBlack transition hover:-translate-y-2 hover:border-pizzaRed hover:shadow-redGlow"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: index * 0.045, duration: 0.5 }}
+              >
+                <div className="relative aspect-square overflow-hidden bg-kraft">
+                  <Image
+                    src="/images/square-pizza-hero.png"
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 92vw, (max-width: 1280px) 45vw, 30vw"
+                    className={`object-cover transition duration-700 group-hover:scale-110 ${menuVisuals[index]}`}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+                  <div className="absolute left-3 top-3 h-12 w-12 border-l-4 border-t-4 border-pizzaRed" />
+                  <p className="absolute bottom-3 right-3 bg-white px-3 py-2 text-sm font-black text-pizzaBlack">
+                    {price}
+                  </p>
+                </div>
+                <div className="p-2 pt-5">
+                  <h3 className="text-3xl font-black leading-tight">{name}</h3>
+                  <p className="mt-1 text-sm font-black text-pizzaRed">{translation}</p>
+                  <p className="mt-4 text-sm font-semibold leading-6 text-pizzaBlack/62">{detail}</p>
+                </div>
+              </motion.article>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -648,12 +664,15 @@ export default function LandingPage() {
             />
             <div>
               <p className="text-2xl font-black">90pizza</p>
-              <p className="mt-1 text-sm font-semibold text-white/50">{t.footer.badge}</p>
+              <p className="mt-1 text-sm font-semibold text-white/50">{t.footer.slogan}</p>
             </div>
           </div>
-          <p className="max-w-md text-sm font-black uppercase tracking-[0.18em] text-white/44">
-            {t.footer.line}
-          </p>
+          <div className="flex flex-wrap gap-4 text-sm font-black text-white/52">
+            <a href="#" className="hover:text-white">90pizza.ge</a>
+            <a href="#" className="hover:text-white">90pizza.co</a>
+            <a href="#" className="hover:text-white">{t.footer.instagram}</a>
+            <span>{t.footer.language}</span>
+          </div>
           <div className="flex items-center gap-2 bg-white px-4 py-3 text-sm font-black text-black">
             <Box className="h-4 w-4 text-pizzaRed" />
             30×30 / 9
