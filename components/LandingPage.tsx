@@ -82,6 +82,18 @@ const toppingMap: Record<PizzaKind, string[]> = {
   ],
 };
 
+const cutSliceToppings = [
+  ["left-[18%] top-[22%] h-8 w-8 rounded-full bg-red-700", "left-[58%] top-[26%] h-5 w-8 rotate-[-18deg] rounded-full bg-green-700"],
+  ["left-[28%] top-[18%] h-10 w-10 rounded-full bg-white", "left-[60%] top-[58%] h-8 w-8 rounded-full bg-red-700"],
+  ["left-[54%] top-[24%] h-9 w-9 rounded-full bg-red-700", "left-[24%] top-[62%] h-4 w-10 rotate-[24deg] rounded-full bg-green-700"],
+  ["left-[22%] top-[52%] h-9 w-9 rounded-full bg-white", "left-[58%] top-[24%] h-9 w-9 rounded-full bg-red-700"],
+  ["left-[23%] top-[22%] h-8 w-8 rounded-full bg-red-700", "left-[58%] top-[54%] h-10 w-10 rounded-full bg-white", "left-[38%] top-[42%] h-4 w-10 rotate-[-20deg] rounded-full bg-green-700"],
+  ["left-[18%] top-[24%] h-4 w-12 rotate-[18deg] rounded-full bg-orange-300", "left-[58%] top-[54%] h-9 w-9 rounded-full bg-red-700"],
+  ["left-[24%] top-[24%] h-9 w-9 rounded-full bg-red-700", "left-[62%] top-[58%] h-4 w-9 rotate-[30deg] rounded-full bg-green-700"],
+  ["left-[20%] top-[58%] h-10 w-10 rounded-full bg-white", "left-[60%] top-[22%] h-8 w-8 rounded-full bg-red-700"],
+  ["left-[18%] top-[18%] h-8 w-8 rounded-full bg-red-700", "left-[56%] top-[54%] h-10 w-10 rounded-full bg-red-700", "left-[42%] top-[32%] h-3 w-8 rotate-[18deg] rounded-full bg-green-700"],
+];
+
 const storyIcons = [Crosshair, Ruler, Grid3X3];
 const deliveryIcons = [PackageCheck, Timer, ShieldCheck];
 
@@ -376,6 +388,18 @@ function MenuPizzaIllustration({ kind }: { kind: PizzaKind }) {
   );
 }
 
+function CutPizzaSlice({ index }: { index: number }) {
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-[#bb2a1c] shadow-[inset_0_0_0_7px_rgba(211,138,60,0.9)]">
+      <div className="absolute inset-[7%] bg-[radial-gradient(circle_at_30%_24%,rgba(255,220,122,0.95),transparent_16%),radial-gradient(circle_at_70%_28%,rgba(255,220,122,0.86),transparent_15%),radial-gradient(circle_at_48%_62%,rgba(255,220,122,0.92),transparent_18%)]" />
+      {cutSliceToppings[index].map((className, toppingIndex) => (
+        <span key={`${index}-${toppingIndex}`} className={`absolute ${className} shadow-sm`} />
+      ))}
+      <div className="absolute inset-0 bg-gradient-to-tr from-black/24 via-transparent to-white/20" />
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const [lang, setLang] = useState<Language>("ge");
   const t = translations[lang];
@@ -393,7 +417,6 @@ export default function LandingPage() {
   const pizzaScale = useTransform(heroProgress, [0, 1], [1, 0.84]);
   const heroTextY = useTransform(heroProgress, [0, 1], [0, -110]);
   const orbitRotate = useTransform(scrollYProgress, [0, 1], [0, 180]);
-  const cutLineScale = useTransform(cutProgress, [0, 0.55, 1], [0, 1, 1]);
   const cutCellOpacity = useTransform(cutProgress, [0, 0.35, 1], [0.18, 0.72, 1]);
 
   return (
@@ -559,31 +582,25 @@ export default function LandingPage() {
             <p className="mt-6 max-w-xl text-base leading-8 text-black/62">{t.cut.body}</p>
           </motion.div>
 
-          <motion.div className="relative aspect-square bg-pizzaBlack p-4 shadow-[0_42px_120px_rgba(17,17,17,0.22)]" style={{ opacity: cutCellOpacity }}>
-            <div className="absolute inset-4 overflow-hidden">
-              <Image
-                src="/images/square-pizza-hero.png"
-                alt=""
-                fill
-                sizes="(max-width: 768px) 92vw, 620px"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-black/18" />
+          <motion.div
+            className="relative aspect-square bg-pizzaBlack p-4 shadow-[0_42px_120px_rgba(17,17,17,0.22)]"
+            style={{ opacity: cutCellOpacity }}
+          >
+            <div className="grid h-full w-full grid-cols-3 gap-2 bg-pizzaBlack">
+              {Array.from({ length: 9 }).map((_, index) => (
+                <motion.div
+                  key={index}
+                  className="relative overflow-hidden bg-kraft"
+                  initial={{ opacity: 0, scale: 0.76, y: 18 }}
+                  whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-120px" }}
+                  transition={{ delay: index * 0.045, duration: 0.46, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <CutPizzaSlice index={index} />
+                </motion.div>
+              ))}
             </div>
-            {[1, 2].map((line) => (
-              <motion.div
-                key={`v-${line}`}
-                className="absolute bottom-4 top-4 w-1 bg-white shadow-[0_0_20px_rgba(255,255,255,0.8)]"
-                style={{ left: `${(line / 3) * 100}%`, scaleY: cutLineScale }}
-              />
-            ))}
-            {[1, 2].map((line) => (
-              <motion.div
-                key={`h-${line}`}
-                className="absolute left-4 right-4 h-1 bg-white shadow-[0_0_20px_rgba(255,255,255,0.8)]"
-                style={{ top: `${(line / 3) * 100}%`, scaleX: cutLineScale }}
-              />
-            ))}
+            <div className="pointer-events-none absolute inset-4 bg-[linear-gradient(to_right,rgba(255,255,255,0.42)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.42)_1px,transparent_1px)] bg-[size:33.333%_33.333%] opacity-40" />
             <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center bg-pizzaRed text-white shadow-redGlow">
               <p className="text-5xl font-black">{t.cut.center}</p>
               <p className="text-xs font-black uppercase">{t.cut.note}</p>
