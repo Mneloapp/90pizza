@@ -376,25 +376,6 @@ function MenuPizzaIllustration({ kind }: { kind: PizzaKind }) {
   );
 }
 
-function CutPizzaSlice({ index }: { index: number }) {
-  const x = index % 3;
-  const y = Math.floor(index / 3);
-
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-kraft">
-      <div
-        className="absolute inset-0 bg-cover bg-no-repeat"
-        style={{
-          backgroundImage: "url('/images/pepperoni-3x3-real.png')",
-          backgroundSize: "300% 300%",
-          backgroundPosition: `${x * 50}% ${y * 50}%`,
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-tr from-black/12 via-transparent to-white/12" />
-    </div>
-  );
-}
-
 export default function LandingPage() {
   const [lang, setLang] = useState<Language>("ge");
   const t = translations[lang];
@@ -581,21 +562,38 @@ export default function LandingPage() {
             className="relative aspect-square bg-pizzaBlack p-4 shadow-[0_42px_120px_rgba(17,17,17,0.22)]"
             style={{ opacity: cutCellOpacity }}
           >
-            <div className="grid h-full w-full grid-cols-3 gap-2 bg-pizzaBlack">
-              {Array.from({ length: 9 }).map((_, index) => (
-                <motion.div
-                  key={index}
-                  className="relative overflow-hidden bg-kraft"
-                  initial={{ opacity: 0, scale: 0.76, y: 18 }}
-                  whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-120px" }}
-                  transition={{ delay: index * 0.045, duration: 0.46, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <CutPizzaSlice index={index} />
-                </motion.div>
-              ))}
+            <div className="relative h-full w-full overflow-hidden bg-kraft">
+              <Image
+                src="/images/pepperoni-3x3-fitted.png"
+                alt=""
+                fill
+                sizes="(max-width: 768px) 92vw, 620px"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/10" />
             </div>
-            <div className="pointer-events-none absolute inset-4 bg-[linear-gradient(to_right,rgba(255,255,255,0.42)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.42)_1px,transparent_1px)] bg-[size:33.333%_33.333%] opacity-40" />
+            {[1, 2].map((line) => (
+              <motion.div
+                key={`v-${line}`}
+                className="absolute bottom-4 top-4 w-1 bg-pizzaBlack/90 shadow-[0_0_18px_rgba(255,255,255,0.28)]"
+                style={{ left: `calc(1rem + (100% - 2rem) * ${line / 3})` }}
+                initial={{ scaleY: 0 }}
+                whileInView={{ scaleY: 1 }}
+                viewport={{ once: true, margin: "-120px" }}
+                transition={{ delay: line * 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              />
+            ))}
+            {[1, 2].map((line) => (
+              <motion.div
+                key={`h-${line}`}
+                className="absolute left-4 right-4 h-1 bg-pizzaBlack/90 shadow-[0_0_18px_rgba(255,255,255,0.28)]"
+                style={{ top: `calc(1rem + (100% - 2rem) * ${line / 3})` }}
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true, margin: "-120px" }}
+                transition={{ delay: line * 0.08 + 0.12, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              />
+            ))}
             <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center bg-pizzaRed text-white shadow-redGlow">
               <p className="text-5xl font-black">{t.cut.center}</p>
               <p className="text-xs font-black uppercase">{t.cut.note}</p>
