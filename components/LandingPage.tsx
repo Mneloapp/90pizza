@@ -7,7 +7,6 @@ import {
   ArrowUpRight,
   Bike,
   Box,
-  Crosshair,
   Grid3X3,
   MoveRight,
   PackageCheck,
@@ -21,7 +20,6 @@ type Language = "ge" | "en";
 
 type HeroVisualCopy = {
   alt: string;
-  rotation: string;
   size: string;
   slices: string;
 };
@@ -35,13 +33,12 @@ const menuPhotoPaths = [
   "/images/menu-veggie-real.png",
 ];
 
-const storyIcons = [Crosshair, Ruler, Grid3X3];
+const storyIcons = [Ruler, Grid3X3];
 const deliveryIcons = [PackageCheck, Timer, ShieldCheck];
 
 const translations = {
   ge: {
     nav: {
-      angle: "90°",
       format: "30×30",
       slices: "9 ნაჭერი",
       menu: "მენიუ",
@@ -56,23 +53,17 @@ const translations = {
         "თანამედროვე მიტანის ბრენდი, რომელიც პიცას უყურებს როგორც პროდუქტს: ზუსტი კუთხე, ოთხკუთხედი ფორმატი, 30×30 სმ და 9 თანაბარი ნაჭერი.",
       menuCta: "მენიუს ნახვა",
       woltCta: "მალე Wolt-ზე",
-      metrics: ["90° კუთხე", "30×30 სმ", "9 თანაბარი"],
+      metrics: ["30×30 სმ", "9 თანაბარი"],
     },
     visual: {
       alt: "90pizza ოთხკუთხედი პიცა 9 ნაჭრად",
-      rotation: "30×30 hero cut",
       size: "30×30 სმ",
       slices: "9 თანაბარი ნაჭერი",
     },
     storytelling: {
       kicker: "სქროლზე გაშლილი კონცეფცია",
-      intro: "სამი რიცხვი ქმნის მთლიან ბრენდს.",
+      intro: "ორი ზუსტი ფორმატი ქმნის მთლიან პროდუქტს.",
       blocks: [
-        {
-          value: "90°",
-          label: "სწორი კუთხე, სწორი გემო",
-          detail: "ბრენდის მთავარი ნიშანი არის კუთხე: მკაფიო, დასამახსოვრებელი და მოძრაობაში ცოცხალი.",
-        },
         {
           value: "30×30",
           label: "ოთხკუთხედი ფორმატი მიტანისთვის",
@@ -125,7 +116,6 @@ const translations = {
   },
   en: {
     nav: {
-      angle: "90°",
       format: "30x30",
       slices: "9 slices",
       menu: "Menu",
@@ -140,23 +130,17 @@ const translations = {
         "A modern delivery brand that treats pizza like a product: a precise angle, a square format, 30x30 cm, and 9 equal slices.",
       menuCta: "View menu",
       woltCta: "Soon on Wolt",
-      metrics: ["90° angle", "30x30 cm", "9 equal"],
+      metrics: ["30x30 cm", "9 equal"],
     },
     visual: {
       alt: "90pizza square pizza cut into 9 slices",
-      rotation: "30x30 hero cut",
       size: "30x30 cm",
       slices: "9 equal slices",
     },
     storytelling: {
       kicker: "scroll storytelling",
-      intro: "Three numbers build the whole brand.",
+      intro: "Two precise formats build the whole product.",
       blocks: [
-        {
-          value: "90°",
-          label: "The right angle. The right taste.",
-          detail: "The core brand signal is an angle: sharp, memorable, and alive in motion.",
-        },
         {
           value: "30x30",
           label: "A square format made for delivery",
@@ -266,7 +250,7 @@ function HeroPizza({
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute inset-[14%] overflow-hidden bg-pizzaBlack p-4 shadow-[0_42px_150px_rgba(224,16,16,0.28)]"
+        className="absolute inset-[14%] bg-pizzaBlack p-4 shadow-[0_42px_150px_rgba(224,16,16,0.28)]"
         style={{ scale }}
         animate={{ y: [0, -10, 0], rotate: [0, 1.2, 0] }}
         transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
@@ -296,24 +280,10 @@ function HeroPizza({
             />
           ))}
         </div>
-      </motion.div>
-      <motion.div
-        className="absolute left-0 top-10 border border-white/10 bg-black/72 px-4 py-3 text-white backdrop-blur-xl"
-        initial={{ opacity: 0, x: -18 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.5, duration: 0.6 }}
-      >
-        <p className="text-xs font-black uppercase text-white/45">{copy.rotation}</p>
-        <p className="mt-1 text-2xl font-black text-pizzaRed">90°</p>
-      </motion.div>
-      <motion.div
-        className="absolute bottom-8 right-0 border border-white/10 bg-white px-4 py-3 text-pizzaBlack shadow-redGlow"
-        initial={{ opacity: 0, x: 18 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.64, duration: 0.6 }}
-      >
-        <p className="text-sm font-black">{copy.size}</p>
-        <p className="text-xs font-bold text-pizzaBlack/55">{copy.slices}</p>
+        <div className="absolute -bottom-10 right-0 border border-white/80 bg-white px-5 py-4 text-pizzaBlack shadow-redGlow">
+          <p className="text-sm font-black">{copy.size}</p>
+          <p className="text-xs font-bold text-pizzaBlack/55">{copy.slices}</p>
+        </div>
       </motion.div>
       <motion.div
         className="absolute -right-2 top-0 h-20 w-20 border-r-4 border-t-4 border-pizzaRed"
@@ -372,11 +342,10 @@ export default function LandingPage() {
                 <span className="text-lg font-black">90pizza</span>
               </a>
               <div className="hidden items-center gap-7 text-xs font-black uppercase text-white/48 md:flex">
-                <a href="#story" className="transition hover:text-white">{t.nav.angle}</a>
                 <a href="#story" className="transition hover:text-white">{t.nav.format}</a>
                 <a href="#cut" className="transition hover:text-white">{t.nav.slices}</a>
-                <a href="#menu" className="transition hover:text-white">{t.nav.menu}</a>
                 <a href="#delivery" className="transition hover:text-white">{t.nav.delivery}</a>
+                <a href="#menu" className="transition hover:text-white">{t.nav.menu}</a>
               </div>
               <LanguageSwitcher lang={lang} setLang={setLang} />
             </nav>
@@ -438,7 +407,7 @@ export default function LandingPage() {
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
               </motion.div>
-              <div className="mt-10 grid max-w-xl grid-cols-3 border-y border-white/10">
+              <div className="mt-10 grid max-w-md grid-cols-2 border-y border-white/10">
                 {t.hero.metrics.map((metric) => (
                   <div key={metric} className="py-5">
                     <p className="text-sm font-black uppercase text-white/58 sm:text-base">{metric}</p>
