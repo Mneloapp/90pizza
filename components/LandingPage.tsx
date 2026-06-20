@@ -133,12 +133,10 @@ const translations = {
       ],
     },
     cut: {
-      kicker: "pizza cut animation",
-      title: "ერთი კვადრატი იყოფა ცხრა თანაბარ ნაწილად.",
-      body:
-        "ხაზები ჩნდება როგორც პროდუქტის ინტერფეისი: ორი ვერტიკალური, ორი ჰორიზონტალური და ზუსტი 9 ნაჭერი.",
+      kicker: "9 ნაჭერი",
+      title: "ეს გეომეტრია, რომელსაც დააგემოვნებ",
       center: "9",
-      note: "equal slices",
+      note: "ნაჭერი",
     },
     delivery: {
       kicker: "delivery-first culture",
@@ -221,12 +219,10 @@ const translations = {
       ],
     },
     cut: {
-      kicker: "pizza cut animation",
-      title: "One square becomes nine equal parts.",
-      body:
-        "Lines appear like a product interface: two vertical, two horizontal, and a precise 9-slice grid.",
+      kicker: "9 slices",
+      title: "Geometry you can taste",
       center: "9",
-      note: "equal slices",
+      note: "slices",
     },
     delivery: {
       kicker: "delivery-first culture",
@@ -555,7 +551,6 @@ export default function LandingPage() {
             <h2 className="mt-5 max-w-2xl text-5xl font-black leading-none sm:text-7xl">
               {t.cut.title}
             </h2>
-            <p className="mt-6 max-w-xl text-base leading-8 text-black/62">{t.cut.body}</p>
           </motion.div>
 
           <motion.div
@@ -575,7 +570,7 @@ export default function LandingPage() {
             {[1, 2].map((line) => (
               <motion.div
                 key={`v-${line}`}
-                className="absolute bottom-4 top-4 w-1 bg-pizzaBlack/90 shadow-[0_0_18px_rgba(255,255,255,0.28)]"
+                className="absolute bottom-4 top-4 w-[5px] -translate-x-1/2 bg-white shadow-[0_0_18px_rgba(255,255,255,0.6)]"
                 style={{ left: `calc(1rem + (100% - 2rem) * ${line / 3})` }}
                 initial={{ scaleY: 0 }}
                 whileInView={{ scaleY: 1 }}
@@ -586,7 +581,7 @@ export default function LandingPage() {
             {[1, 2].map((line) => (
               <motion.div
                 key={`h-${line}`}
-                className="absolute left-4 right-4 h-1 bg-pizzaBlack/90 shadow-[0_0_18px_rgba(255,255,255,0.28)]"
+                className="absolute left-4 right-4 h-[5px] -translate-y-1/2 bg-white shadow-[0_0_18px_rgba(255,255,255,0.6)]"
                 style={{ top: `calc(1rem + (100% - 2rem) * ${line / 3})` }}
                 initial={{ scaleX: 0 }}
                 whileInView={{ scaleX: 1 }}
