@@ -82,18 +82,6 @@ const toppingMap: Record<PizzaKind, string[]> = {
   ],
 };
 
-const cutSliceToppings = [
-  ["left-[18%] top-[22%] h-8 w-8 rounded-full bg-red-700", "left-[58%] top-[26%] h-5 w-8 rotate-[-18deg] rounded-full bg-green-700"],
-  ["left-[28%] top-[18%] h-10 w-10 rounded-full bg-white", "left-[60%] top-[58%] h-8 w-8 rounded-full bg-red-700"],
-  ["left-[54%] top-[24%] h-9 w-9 rounded-full bg-red-700", "left-[24%] top-[62%] h-4 w-10 rotate-[24deg] rounded-full bg-green-700"],
-  ["left-[22%] top-[52%] h-9 w-9 rounded-full bg-white", "left-[58%] top-[24%] h-9 w-9 rounded-full bg-red-700"],
-  ["left-[23%] top-[22%] h-8 w-8 rounded-full bg-red-700", "left-[58%] top-[54%] h-10 w-10 rounded-full bg-white", "left-[38%] top-[42%] h-4 w-10 rotate-[-20deg] rounded-full bg-green-700"],
-  ["left-[18%] top-[24%] h-4 w-12 rotate-[18deg] rounded-full bg-orange-300", "left-[58%] top-[54%] h-9 w-9 rounded-full bg-red-700"],
-  ["left-[24%] top-[24%] h-9 w-9 rounded-full bg-red-700", "left-[62%] top-[58%] h-4 w-9 rotate-[30deg] rounded-full bg-green-700"],
-  ["left-[20%] top-[58%] h-10 w-10 rounded-full bg-white", "left-[60%] top-[22%] h-8 w-8 rounded-full bg-red-700"],
-  ["left-[18%] top-[18%] h-8 w-8 rounded-full bg-red-700", "left-[56%] top-[54%] h-10 w-10 rounded-full bg-red-700", "left-[42%] top-[32%] h-3 w-8 rotate-[18deg] rounded-full bg-green-700"],
-];
-
 const storyIcons = [Crosshair, Ruler, Grid3X3];
 const deliveryIcons = [PackageCheck, Timer, ShieldCheck];
 
@@ -389,13 +377,20 @@ function MenuPizzaIllustration({ kind }: { kind: PizzaKind }) {
 }
 
 function CutPizzaSlice({ index }: { index: number }) {
+  const x = index % 3;
+  const y = Math.floor(index / 3);
+
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#bb2a1c] shadow-[inset_0_0_0_7px_rgba(211,138,60,0.9)]">
-      <div className="absolute inset-[7%] bg-[radial-gradient(circle_at_30%_24%,rgba(255,220,122,0.95),transparent_16%),radial-gradient(circle_at_70%_28%,rgba(255,220,122,0.86),transparent_15%),radial-gradient(circle_at_48%_62%,rgba(255,220,122,0.92),transparent_18%)]" />
-      {cutSliceToppings[index].map((className, toppingIndex) => (
-        <span key={`${index}-${toppingIndex}`} className={`absolute ${className} shadow-sm`} />
-      ))}
-      <div className="absolute inset-0 bg-gradient-to-tr from-black/24 via-transparent to-white/20" />
+    <div className="relative h-full w-full overflow-hidden bg-kraft">
+      <div
+        className="absolute inset-0 bg-cover bg-no-repeat"
+        style={{
+          backgroundImage: "url('/images/pepperoni-3x3-real.png')",
+          backgroundSize: "300% 300%",
+          backgroundPosition: `${x * 50}% ${y * 50}%`,
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-tr from-black/12 via-transparent to-white/12" />
     </div>
   );
 }
