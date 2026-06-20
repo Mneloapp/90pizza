@@ -26,61 +26,14 @@ type HeroVisualCopy = {
   slices: string;
 };
 
-type PizzaKind = "margherita" | "pepperoni" | "cheese" | "mushroom" | "spicy" | "veggie";
-
-const menuKinds: PizzaKind[] = ["margherita", "pepperoni", "cheese", "mushroom", "spicy", "veggie"];
-
-const toppingMap: Record<PizzaKind, string[]> = {
-  margherita: [
-    "left-[18%] top-[20%] h-9 w-9 rounded-full bg-white",
-    "left-[62%] top-[24%] h-10 w-10 rounded-full bg-white",
-    "left-[36%] top-[58%] h-12 w-12 rounded-full bg-white",
-    "left-[28%] top-[34%] h-4 w-8 rotate-[-25deg] rounded-full bg-green-600",
-    "left-[68%] top-[62%] h-4 w-9 rotate-[28deg] rounded-full bg-green-600",
-    "left-[48%] top-[38%] h-3 w-7 rotate-[12deg] rounded-full bg-green-700",
-  ],
-  pepperoni: [
-    "left-[18%] top-[18%] h-12 w-12 rounded-full bg-red-700 ring-4 ring-red-950/35",
-    "left-[58%] top-[20%] h-14 w-14 rounded-full bg-red-700 ring-4 ring-red-950/35",
-    "left-[34%] top-[42%] h-14 w-14 rounded-full bg-red-700 ring-4 ring-red-950/35",
-    "left-[66%] top-[58%] h-12 w-12 rounded-full bg-red-700 ring-4 ring-red-950/35",
-    "left-[18%] top-[66%] h-11 w-11 rounded-full bg-red-700 ring-4 ring-red-950/35",
-  ],
-  cheese: [
-    "left-[15%] top-[22%] h-20 w-20 rotate-12 rounded-[42%] bg-yellow-100/95",
-    "left-[48%] top-[16%] h-24 w-24 rotate-[-18deg] rounded-[42%] bg-amber-200/95",
-    "left-[28%] top-[52%] h-24 w-28 rotate-[20deg] rounded-[42%] bg-white/90",
-    "left-[62%] top-[56%] h-16 w-20 rotate-[-10deg] rounded-[42%] bg-yellow-300/90",
-    "left-[18%] top-[42%] h-2 w-28 rotate-[18deg] rounded-full bg-white/70",
-    "left-[45%] top-[43%] h-2 w-28 rotate-[-22deg] rounded-full bg-white/70",
-  ],
-  mushroom: [
-    "left-[18%] top-[22%] h-10 w-14 rounded-t-full bg-stone-700",
-    "left-[24%] top-[31%] h-7 w-5 bg-stone-200",
-    "left-[56%] top-[20%] h-12 w-16 rounded-t-full bg-stone-600",
-    "left-[64%] top-[31%] h-8 w-5 bg-stone-200",
-    "left-[34%] top-[58%] h-12 w-16 rounded-t-full bg-stone-700",
-    "left-[43%] top-[69%] h-8 w-5 bg-stone-200",
-    "left-[65%] top-[60%] h-4 w-10 rotate-[24deg] rounded-full bg-green-700",
-  ],
-  spicy: [
-    "left-[18%] top-[18%] h-14 w-14 rounded-full bg-red-800",
-    "left-[62%] top-[22%] h-16 w-8 rotate-45 rounded-full bg-pizzaRed",
-    "left-[35%] top-[42%] h-16 w-8 rotate-[-28deg] rounded-full bg-red-600",
-    "left-[62%] top-[60%] h-14 w-7 rotate-[30deg] rounded-full bg-red-700",
-    "left-[20%] top-[66%] h-3 w-16 rotate-[18deg] rounded-full bg-orange-300",
-    "left-[48%] top-[32%] h-3 w-14 rotate-[-18deg] rounded-full bg-orange-300",
-  ],
-  veggie: [
-    "left-[18%] top-[20%] h-9 w-9 rounded-full bg-green-600",
-    "left-[58%] top-[18%] h-10 w-10 rounded-full bg-yellow-300",
-    "left-[38%] top-[38%] h-10 w-10 rounded-full bg-red-500",
-    "left-[68%] top-[52%] h-9 w-9 rounded-full bg-purple-700",
-    "left-[20%] top-[64%] h-10 w-10 rounded-full bg-lime-500",
-    "left-[48%] top-[66%] h-5 w-14 rotate-[24deg] rounded-full bg-green-700",
-    "left-[22%] top-[42%] h-5 w-12 rotate-[-18deg] rounded-full bg-orange-400",
-  ],
-};
+const menuPhotoPaths = [
+  "/images/menu-margherita-real.png",
+  "/images/menu-pepperoni-real.png",
+  "/images/menu-four-cheese-real.png",
+  "/images/menu-mushroom-real.png",
+  "/images/menu-spicy-real.png",
+  "/images/menu-veggie-real.png",
+];
 
 const storyIcons = [Crosshair, Ruler, Grid3X3];
 const deliveryIcons = [PackageCheck, Timer, ShieldCheck];
@@ -348,22 +301,6 @@ function HeroPizza({
         animate={{ rotate: [0, 90, 0] }}
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
-    </div>
-  );
-}
-
-function MenuPizzaIllustration({ kind }: { kind: PizzaKind }) {
-  return (
-    <div className="relative aspect-square overflow-hidden bg-[#c47a33] p-[7%]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.2),transparent_24%),radial-gradient(circle_at_80%_84%,rgba(17,17,17,0.2),transparent_28%)]" />
-      <div className="relative h-full w-full overflow-hidden bg-[#b82919] shadow-[inset_0_0_0_10px_rgba(255,185,82,0.78)]">
-        <div className="absolute inset-[7%] bg-[radial-gradient(circle_at_30%_22%,rgba(255,221,124,0.96),transparent_15%),radial-gradient(circle_at_70%_26%,rgba(255,221,124,0.9),transparent_15%),radial-gradient(circle_at_50%_55%,rgba(255,221,124,0.92),transparent_17%),radial-gradient(circle_at_24%_76%,rgba(255,221,124,0.86),transparent_13%),radial-gradient(circle_at_76%_76%,rgba(255,221,124,0.9),transparent_14%)]" />
-        {toppingMap[kind].map((className, index) => (
-          <span key={`${kind}-${index}`} className={`absolute ${className} shadow-sm`} />
-        ))}
-        <div className="slice-grid absolute inset-0 opacity-28" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/22 via-transparent to-white/18" />
-      </div>
     </div>
   );
 }
@@ -683,22 +620,27 @@ export default function LandingPage() {
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ delay: index * 0.045, duration: 0.5 }}
               >
-                <div className="relative overflow-hidden bg-kraft">
-                  <motion.div
-                    className="transition duration-700 group-hover:scale-105"
-                    whileHover={{ rotate: index % 2 === 0 ? 1.2 : -1.2 }}
-                  >
-                    <MenuPizzaIllustration kind={menuKinds[index]} />
-                  </motion.div>
+                <div className="relative aspect-square overflow-hidden bg-kraft">
+                  <Image
+                    src={menuPhotoPaths[index]}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 92vw, (max-width: 1280px) 45vw, 30vw"
+                    className="object-cover transition duration-700 group-hover:scale-105"
+                  />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                   <div className="absolute left-3 top-3 h-12 w-12 border-l-4 border-t-4 border-pizzaRed" />
-                  <p className="absolute bottom-3 right-3 bg-white px-3 py-2 text-sm font-black text-pizzaBlack">
-                    {price}
-                  </p>
                 </div>
                 <div className="p-2 pt-5">
-                  <h3 className="text-3xl font-black leading-tight">{name}</h3>
-                  <p className="mt-1 text-sm font-black text-pizzaRed">{translation}</p>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-3xl font-black leading-tight">{name}</h3>
+                      <p className="mt-1 text-sm font-black text-pizzaRed">{translation}</p>
+                    </div>
+                    <p className="shrink-0 bg-softGray px-3 py-2 text-sm font-black text-pizzaBlack">
+                      {price}
+                    </p>
+                  </div>
                   <p className="mt-4 text-sm font-semibold leading-6 text-pizzaBlack/62">{detail}</p>
                 </div>
               </motion.article>
