@@ -266,16 +266,35 @@ function HeroPizza({
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute inset-[14%] overflow-hidden bg-[#d99a48] p-[5%] shadow-[0_42px_150px_rgba(224,16,16,0.28)]"
+        className="absolute inset-[14%] overflow-hidden bg-pizzaBlack p-4 shadow-[0_42px_150px_rgba(224,16,16,0.28)]"
         style={{ scale }}
         animate={{ y: [0, -10, 0], rotate: [0, 1.2, 0] }}
         transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
       >
-        <div className="relative h-full w-full overflow-hidden bg-[#b21d16]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_32%_28%,rgba(255,255,255,0.34),transparent_10%),radial-gradient(circle_at_68%_32%,rgba(255,255,255,0.28),transparent_11%),radial-gradient(circle_at_46%_66%,rgba(255,255,255,0.32),transparent_12%),radial-gradient(circle_at_72%_70%,rgba(83,133,45,0.9),transparent_7%),radial-gradient(circle_at_24%_62%,rgba(83,133,45,0.88),transparent_7%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,220,122,0.5),transparent_42%),linear-gradient(45deg,transparent_58%,rgba(255,255,255,0.22))]" />
-          <div className="slice-grid absolute inset-0 opacity-38" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-black/25 via-transparent to-white/20" />
+        <div className="relative h-full w-full overflow-hidden bg-kraft">
+          <Image
+            src="/images/pepperoni-square-uncut.png"
+            alt={copy.alt}
+            fill
+            priority
+            sizes="(max-width: 768px) 92vw, 620px"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/10" />
+          {[1, 2].map((line) => (
+            <span
+              key={`hero-v-${line}`}
+              className="absolute bottom-0 top-0 w-[3px] -translate-x-1/2 bg-white/85 shadow-[0_0_14px_rgba(255,255,255,0.55)]"
+              style={{ left: `${(line / 3) * 100}%` }}
+            />
+          ))}
+          {[1, 2].map((line) => (
+            <span
+              key={`hero-h-${line}`}
+              className="absolute left-0 right-0 h-[3px] -translate-y-1/2 bg-white/85 shadow-[0_0_14px_rgba(255,255,255,0.55)]"
+              style={{ top: `${(line / 3) * 100}%` }}
+            />
+          ))}
         </div>
       </motion.div>
       <motion.div
