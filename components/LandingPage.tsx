@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   Bike,
   Box,
+  Crosshair,
   Grid3X3,
   MoveRight,
   PackageCheck,
@@ -33,7 +34,7 @@ const menuPhotoPaths = [
   "/images/menu-veggie-real.png",
 ];
 
-const storyIcons = [Ruler, Grid3X3];
+const storyIcons = [Crosshair, Ruler, Grid3X3];
 const deliveryIcons = [PackageCheck, Timer, ShieldCheck];
 
 const translations = {
@@ -61,9 +62,13 @@ const translations = {
       slices: "9 თანაბარი ნაჭერი",
     },
     storytelling: {
-      kicker: "სქროლზე გაშლილი კონცეფცია",
-      intro: "ორი ზუსტი ფორმატი ქმნის მთლიან პროდუქტს.",
+      kicker: "30×30",
       blocks: [
+        {
+          value: "90°",
+          label: "სწორი კუთხე, სწორი გემო",
+          detail: "ბრენდის მთავარი ნიშანი არის კუთხე: მკაფიო, დასამახსოვრებელი და მოძრაობაში ცოცხალი.",
+        },
         {
           value: "30×30",
           label: "ოთხკუთხედი ფორმატი მიტანისთვის",
@@ -138,9 +143,13 @@ const translations = {
       slices: "9 equal slices",
     },
     storytelling: {
-      kicker: "scroll storytelling",
-      intro: "Two precise formats build the whole product.",
+      kicker: "30x30",
       blocks: [
+        {
+          value: "90°",
+          label: "The right angle. The right taste.",
+          detail: "The core brand signal is an angle: sharp, memorable, and alive in motion.",
+        },
         {
           value: "30x30",
           label: "A square format made for delivery",
@@ -425,10 +434,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-dark-grid opacity-70" />
         <div className="relative mx-auto max-w-7xl">
           <Kicker>{t.storytelling.kicker}</Kicker>
-          <h2 className="mt-5 max-w-4xl text-5xl font-black leading-none sm:text-7xl">
-            {t.storytelling.intro}
-          </h2>
-          <div className="mt-14 grid gap-5">
+          <div className="mt-10 grid gap-5">
             {t.storytelling.blocks.map((block, index) => {
               const Icon = storyIcons[index];
 
