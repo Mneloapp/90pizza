@@ -54,7 +54,7 @@ const translations = {
         "თანამედროვე მიტანის ბრენდი, რომელიც პიცას უყურებს როგორც პროდუქტს: ზუსტი კუთხე, ოთხკუთხედი ფორმატი, 30×30 სმ და 9 თანაბარი ნაჭერი.",
       menuCta: "მენიუს ნახვა",
       woltCta: "მალე Wolt-ზე",
-      metrics: ["30×30 სმ", "9 თანაბარი"],
+      metrics: ["90°", "30×30 სმ", "9 ნაჭერი"],
     },
     visual: {
       alt: "90pizza ოთხკუთხედი პიცა 9 ნაჭრად",
@@ -86,7 +86,7 @@ const translations = {
       title: "გეომეტრია, რომელსაც დააგემოვნებ",
     },
     delivery: {
-      kicker: "delivery-first culture",
+      kicker: "მიტანა",
       title: "შექმნილია სწრაფი მიტანისთვის",
       body:
         "90pizza იწყება არა მაგიდით, არამედ მარშრუტით: ყუთი, სითბო, აპში ხილვადობა და სწრაფი handoff.",
@@ -101,16 +101,16 @@ const translations = {
       ],
     },
     menu: {
-      kicker: "menu system",
-      title: "ექვსი კვადრატი. ერთი ზუსტი ფორმატი.",
+      kicker: "მენიუ",
+      title: "არჩევანი ყოველთვის შენზეა.",
       body: "მენიუ რჩება პროდუქტის ნაწილად: ყოველი პიცა არის 30×30, დაჭრილი 9 თანაბარ ნაჭრად.",
       items: [
-        ["ნაინთი მარგარიტა", "Ninety Margherita", "სან მარცანო, ფიორ დი ლატე, ბაზილიკის ზეთი", "24 ₾"],
-        ["პეპერონი გრიდი", "Pepperoni Grid", "პეპერონი, მოცარელა, ჩილის თაფლი", "29 ₾"],
-        ["ოთხი ყველი", "Four Cheese", "მოცარელა, გორგონზოლა, რიკოტა, პარმეზანი", "28 ₾"],
-        ["მაშრუმ სქუერი", "Mushroom Square", "შემწვარი სოკო, სკამორცა, ნივრის კრემი", "27 ₾"],
-        ["სპაისი ქორნერი", "Spicy Corner", "ნდუჯა, ჩილი, წითელი წიწაკა, ცხარე ზეთი", "31 ₾"],
-        ["ვეგი გრიდი", "Veggie Grid", "ფერადი ბოსტნეული, მოცარელა, მწვანე ზეთი", "26 ₾"],
+        ["ნაინთი მარგარიტა", "Ninety Margherita", "სან მარცანო, ფიორ დი ლატე, ბაზილიკის ზეთი"],
+        ["პეპერონი გრიდი", "Pepperoni Grid", "პეპერონი, მოცარელა, ჩილის თაფლი"],
+        ["ოთხი ყველი", "Four Cheese", "მოცარელა, გორგონზოლა, რიკოტა, პარმეზანი"],
+        ["მაშრუმ სქუერი", "Mushroom Square", "შემწვარი სოკო, სკამორცა, ნივრის კრემი"],
+        ["სპაისი ქორნერი", "Spicy Corner", "ნდუჯა, ჩილი, წითელი წიწაკა, ცხარე ზეთი"],
+        ["ვეგი გრიდი", "Veggie Grid", "ფერადი ბოსტნეული, მოცარელა, მწვანე ზეთი"],
       ],
     },
     footer: {
@@ -135,7 +135,7 @@ const translations = {
         "A modern delivery brand that treats pizza like a product: a precise angle, a square format, 30x30 cm, and 9 equal slices.",
       menuCta: "View menu",
       woltCta: "Soon on Wolt",
-      metrics: ["30x30 cm", "9 equal"],
+      metrics: ["90°", "30x30 cm", "9 slices"],
     },
     visual: {
       alt: "90pizza square pizza cut into 9 slices",
@@ -167,7 +167,7 @@ const translations = {
       title: "Geometry you can taste",
     },
     delivery: {
-      kicker: "delivery-first culture",
+      kicker: "Delivery",
       title: "Built for fast delivery",
       body:
         "90pizza starts with the route, not the table: box, heat, app visibility, and a fast handoff.",
@@ -182,16 +182,16 @@ const translations = {
       ],
     },
     menu: {
-      kicker: "menu system",
-      title: "Six squares. One precise format.",
+      kicker: "Menu",
+      title: "The choice is always yours.",
       body: "The menu stays part of the product system: every pizza is 30x30, cut into 9 equal slices.",
       items: [
-        ["Ninety Margherita", "ნაინთი მარგარიტა", "San Marzano, fior di latte, basil oil", "24 GEL"],
-        ["Pepperoni Grid", "პეპერონი გრიდი", "Pepperoni, mozzarella, chili honey", "29 GEL"],
-        ["Four Cheese", "ოთხი ყველი", "Mozzarella, gorgonzola, ricotta, parmesan", "28 GEL"],
-        ["Mushroom Square", "მაშრუმ სქუერი", "Roasted mushrooms, scamorza, garlic cream", "27 GEL"],
-        ["Spicy Corner", "სპაისი ქორნერი", "Nduja, chili, red pepper, hot oil", "31 GEL"],
-        ["Veggie Grid", "ვეგი გრიდი", "Colorful vegetables, mozzarella, green oil", "26 GEL"],
+        ["Ninety Margherita", "ნაინთი მარგარიტა", "San Marzano, fior di latte, basil oil"],
+        ["Pepperoni Grid", "პეპერონი გრიდი", "Pepperoni, mozzarella, chili honey"],
+        ["Four Cheese", "ოთხი ყველი", "Mozzarella, gorgonzola, ricotta, parmesan"],
+        ["Mushroom Square", "მაშრუმ სქუერი", "Roasted mushrooms, scamorza, garlic cream"],
+        ["Spicy Corner", "სპაისი ქორნერი", "Nduja, chili, red pepper, hot oil"],
+        ["Veggie Grid", "ვეგი გრიდი", "Colorful vegetables, mozzarella, green oil"],
       ],
     },
     footer: {
@@ -416,7 +416,7 @@ export default function LandingPage() {
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
               </motion.div>
-              <div className="mt-10 grid max-w-md grid-cols-2 border-y border-white/10">
+              <div className="mt-10 grid max-w-xl grid-cols-3 border-y border-white/10">
                 {t.hero.metrics.map((metric) => (
                   <div key={metric} className="py-5">
                     <p className="text-sm font-black uppercase text-white/58 sm:text-base">{metric}</p>
@@ -605,7 +605,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-14 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {t.menu.items.map(([name, translation, detail, price], index) => (
+            {t.menu.items.map(([name, translation, detail], index) => (
               <motion.article
                 key={name}
                 className="group border border-white/10 bg-white p-4 text-pizzaBlack transition hover:-translate-y-2 hover:border-pizzaRed hover:shadow-redGlow"
@@ -626,15 +626,8 @@ export default function LandingPage() {
                   <div className="absolute left-3 top-3 h-12 w-12 border-l-4 border-t-4 border-pizzaRed" />
                 </div>
                 <div className="p-2 pt-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-3xl font-black leading-tight">{name}</h3>
-                      <p className="mt-1 text-sm font-black text-pizzaRed">{translation}</p>
-                    </div>
-                    <p className="shrink-0 bg-softGray px-3 py-2 text-sm font-black text-pizzaBlack">
-                      {price}
-                    </p>
-                  </div>
+                  <h3 className="text-3xl font-black leading-tight">{name}</h3>
+                  <p className="mt-1 text-sm font-black text-pizzaRed">{translation}</p>
                   <p className="mt-4 text-sm font-semibold leading-6 text-pizzaBlack/62">{detail}</p>
                 </div>
               </motion.article>
