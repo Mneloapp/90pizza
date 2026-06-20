@@ -134,9 +134,7 @@ const translations = {
     },
     cut: {
       kicker: "9 ნაჭერი",
-      title: "ეს გეომეტრია, რომელსაც დააგემოვნებ",
-      center: "9",
-      note: "ნაჭერი",
+      title: "გეომეტრია, რომელსაც დააგემოვნებ",
     },
     delivery: {
       kicker: "delivery-first culture",
@@ -221,8 +219,6 @@ const translations = {
     cut: {
       kicker: "9 slices",
       title: "Geometry you can taste",
-      center: "9",
-      note: "slices",
     },
     delivery: {
       kicker: "delivery-first culture",
@@ -559,7 +555,7 @@ export default function LandingPage() {
           >
             <div className="relative h-full w-full overflow-hidden bg-kraft">
               <Image
-                src="/images/pepperoni-3x3-fitted.png"
+                src="/images/pepperoni-square-uncut.png"
                 alt=""
                 fill
                 sizes="(max-width: 768px) 92vw, 620px"
@@ -589,10 +585,6 @@ export default function LandingPage() {
                 transition={{ delay: line * 0.08 + 0.12, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
               />
             ))}
-            <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center bg-pizzaRed text-white shadow-redGlow">
-              <p className="text-5xl font-black">{t.cut.center}</p>
-              <p className="text-xs font-black uppercase">{t.cut.note}</p>
-            </div>
           </motion.div>
         </div>
       </section>
