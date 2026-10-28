@@ -1,5 +1,5 @@
-import LandingPage from "@/components/LandingPage";
+import SquareDrop from "@/components/SquareDrop";
 
 export default function Home() {
-  return <LandingPage />;
+  return <SquareDrop />;
 }
