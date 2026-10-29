@@ -1,0 +1,19 @@
+{
+  "concept": "Inside the Flavor: a continuous 3D camera journey from the oven, through ingredients, into a square pizza, nine slices, and a delivery box.",
+  "chapters": [
+    "The oven / anticipation",
+    "Flying through real ingredient textures",
+    "The 30x30 square assembles",
+    "Nine slices and choosing a flavor",
+    "A branded box arrives"
+  ],
+  "generator": "Built-in image_gen",
+  "prompt": "Use case: product-mockup\nAsset type: photographic texture atlas for four ingredients in an immersive 3D pizza brand website. Create ONE square atlas with four equal quadrants on a truly transparent background. No text or borders.\nTop-left quadrant: one delicious cupped pepperoni slice, circular, straight-on top view, realistic deep-red cured meat, tiny ivory fat marbling, crisp darker edges, a subtle oily sheen.\nTop-right quadrant: one fresh basil leaf, top view, real detailed veins, naturally wrinkled rich green surface, short stem.\nBottom-left quadrant: one ripe tomato half, sliced cut surface facing camera, realistic wet seed chambers, deep natural red skin, no leaves.\nBottom-right quadrant: one single small torn piece of fresh mozzarella, irregular organic curds and soft white texture, not a cube.\nAll four isolated ingredients have similar photographic scale, each centered within its own quadrant and occupying about 65 percent of that quadrant, generous transparent gaps, no overlap and no cropped edges. Clean luxury food studio macro photography, directional but soft neutral light, high texture detail, appetizing natural colors. NOT illustration, NOT cartoon, NOT plastic 3D, NOT shiny toy food. No plates, utensils, hands, flour, props, background, labels, shadows baked into the background, watermark, or letters.",
+  "source": "exec-857ccdc7-890c-41be-96c3-42ffb70efabd.png",
+  "assets": [
+    "public/images/journey/pepperoni.webp",
+    "public/images/journey/basil.webp",
+    "public/images/journey/tomato.webp",
+    "public/images/journey/mozzarella.webp"
+  ]
+}

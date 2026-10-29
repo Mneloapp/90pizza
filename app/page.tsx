@@ -1,5 +1,5 @@
-import SquareDrop from "@/components/SquareDrop";
+import PizzaJourney from "@/components/PizzaJourney";
 
 export default function Home() {
-  return <SquareDrop />;
+  return <PizzaJourney />;
 }

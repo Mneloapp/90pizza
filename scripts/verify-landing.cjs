@@ -2,74 +2,62 @@ const { chromium } = require("playwright");
 const sharp = require("sharp");
 const fs = require("node:fs/promises");
 const assert = require("node:assert/strict");
-
 const origin = process.env.PREVIEW_URL || "http://127.0.0.1:3000";
-const output = process.env.REVIEW_OUTPUT || "/private/tmp/90pizza-review";
+const output =
+  process.env.REVIEW_OUTPUT || "/private/tmp/90pizza-journey-review";
 
-async function foodPixels(buffer) {
+async function warmPixels(buffer) {
   const { data, info } = await sharp(buffer)
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
   let count = 0;
-  for (let i = 0; i < data.length; i += info.channels) {
+  for (let i = 0; i < data.length; i += info.channels)
     if (
       data[i] > 90 &&
-      data[i] > data[i + 1] * 1.2 &&
-      data[i + 1] > data[i + 2] * 1.2
+      data[i] > data[i + 1] * 1.3 &&
+      data[i] > data[i + 2] * 1.3
     )
       count++;
-  }
   return count;
 }
-
-async function captureCanvas(page, selector) {
-  const box = await page.locator(`${selector} canvas`).boundingBox();
-  const viewport = page.viewportSize();
-  const left = Math.max(0, Math.ceil(box.x));
-  const top = Math.max(0, Math.ceil(box.y));
-  const width = Math.floor(Math.min(viewport.width, box.x + box.width) - left);
-  const height = Math.floor(
-    Math.min(viewport.height, box.y + box.height) - top,
-  );
-  assert.ok(width > 0 && height > 0, "Canvas must intersect the viewport");
-  return sharp(await page.screenshot())
-    .extract({ left, top, width, height })
-    .toBuffer();
-}
-
-async function jump(page, selector) {
+async function chapter(page, index) {
   await page
-    .locator(selector)
-    .evaluate((element) =>
-      element.scrollIntoView({ block: "start", behavior: "instant" }),
+    .locator("#moment-" + index)
+    .evaluate((node) =>
+      node.scrollIntoView({ block: "start", behavior: "instant" }),
     );
-  await page.waitForTimeout(850);
+  await page.waitForTimeout(1300);
+  await page.waitForFunction(
+    (index) =>
+      Math.abs(
+        Number(document.querySelector(".journey-world").dataset.progress) -
+          index,
+      ) < 0.015,
+    index,
+  );
 }
-
-async function checkWidth(page, width) {
-  const size = await page.evaluate(() => ({
+async function widthCheck(page, viewport) {
+  const dimensions = await page.evaluate(() => ({
     body: document.body.scrollWidth,
     viewport: document.documentElement.clientWidth,
   }));
   assert.ok(
-    size.body <= size.viewport,
-    `Horizontal overflow at ${width}: ${JSON.stringify(size)}`,
+    dimensions.body <= dimensions.viewport,
+    "Horizontal overflow at " + viewport.width,
   );
   const clipped = await page
-    .locator("h1,h2,h3,.drop-button,.flavor-picker button")
-    .evaluateAll((elements) =>
-      elements
-        .filter((element) => element.scrollWidth > element.clientWidth + 2)
-        .map((element) => element.textContent),
+    .locator("h1,h2,h3,.journey-cta,.journey-flavors button")
+    .evaluateAll((nodes) =>
+      nodes
+        .filter((node) => node.scrollWidth > node.clientWidth + 2)
+        .map((node) => node.textContent),
     );
-  assert.deepEqual(clipped, [], `Clipped text at ${width}`);
+  assert.deepEqual(clipped, [], "Clipped text at " + viewport.width);
 }
-
 (async () => {
   await fs.mkdir(output, { recursive: true });
   const browser = await chromium.launch({
-    headless: true,
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,
     args: [
       "--enable-webgl",
@@ -87,174 +75,157 @@ async function checkWidth(page, width) {
       { width: 320, height: 568 },
       { width: 844, height: 390 },
     ]) {
-      const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+      const page = await browser.newPage({
+        viewport,
+        deviceScaleFactor: 1,
+        hasTouch: viewport.width < 760,
+      });
       page.on("pageerror", (error) => errors.push(error.message));
       page.on("response", (response) => {
         if (response.url().startsWith(origin) && response.status() >= 400)
-          errors.push(`${response.status()} ${response.url()}`);
+          errors.push(response.status() + " " + response.url());
       });
       await page.goto(origin, { waitUntil: "networkidle" });
       await page
-        .locator('.hero-world [data-ready="true"]')
+        .locator(".journey-world[data-ready=true]")
         .waitFor({ timeout: 30000 });
       await page.evaluate(() => document.fonts.ready);
-      await page.waitForTimeout(800);
       assert.equal(await page.locator("html").getAttribute("lang"), "ka");
       assert.equal(
-        await page.locator(".hero-tagline h2").innerText(),
-        "პიცა სწორი კუთხით.",
+        await page.locator("canvas").count(),
+        1,
+        "The journey must share a single WebGL world",
       );
-      await checkWidth(page, viewport.width);
-      await page.screenshot({ path: `${output}/hero-${viewport.width}.png` });
-      const hero = await captureCanvas(page, ".hero-world");
-      const heroSize = await sharp(hero).metadata();
-      assert.ok(
-        (await foodPixels(hero)) >
-          Math.min(6000, heroSize.width * heroSize.height * 0.02),
-        "The box must contain a visible pizza",
-      );
-      await page
-        .getByRole("button", { name: "ყუთის დახურვა", exact: true })
-        .click();
-      await page.waitForTimeout(1100);
-      assert.notDeepEqual(
-        hero,
-        await captureCanvas(page, ".hero-world"),
-        "Closing the box must change the scene",
-      );
-      await page
-        .getByRole("button", { name: "ყუთის გახსნა", exact: true })
-        .click();
-      await jump(page, "#flavors");
-      await page
-        .locator(".flavor-world")
-        .evaluate((element) =>
-          element.scrollIntoView({ block: "center", behavior: "instant" }),
+      await widthCheck(page, viewport);
+      const scenes = [];
+      for (let i = 0; i < 5; i++) {
+        await chapter(page, i);
+        assert.equal(
+          await page.locator(".journey-page").getAttribute("data-chapter"),
+          String(i),
         );
-      await page.waitForTimeout(500);
-      await page.locator('.flavor-world [data-ready="true"]').waitFor();
-      const pizza = await captureCanvas(page, ".flavor-world");
-      const pixels = await foodPixels(pizza);
-      assert.ok(pixels > 10000, `Blank pizza at ${viewport.width}: ${pixels}`);
+        const picture = await page.screenshot();
+        const canvasFrame = await page.screenshot({
+          style:
+            ".journey-header,.journey-rail,.journey-timeline,.journey-footer{visibility:hidden!important}",
+        });
+        const pixels = await warmPixels(canvasFrame);
+        assert.ok(
+          pixels > 1800,
+          "Empty scene at " + viewport.width + " chapter " + i + ": " + pixels,
+        );
+        scenes.push(pixels);
+        await fs.writeFile(
+          output +
+            "/scene-" +
+            viewport.width +
+            "x" +
+            viewport.height +
+            "-" +
+            i +
+            ".png",
+          picture,
+        );
+      }
+      await chapter(page, 3);
+      const selector = page.locator("#moment-3 .journey-flavors");
+      await selector
+        .getByRole("radio", { name: "ოთხი ყველი", exact: true })
+        .click();
+      assert.equal(
+        await selector
+          .getByRole("radio", { name: "ოთხი ყველი", exact: true })
+          .getAttribute("aria-checked"),
+        "true",
+      );
+      await selector
+        .getByRole("radio", { name: "ოთხი ყველი", exact: true })
+        .press("ArrowRight");
+      assert.equal(
+        await selector
+          .getByRole("radio", { name: "მარგარიტა", exact: true })
+          .getAttribute("aria-checked"),
+        "true",
+      );
       await page
         .getByRole("button", { name: "ნაჭრების გაშლა", exact: true })
         .click();
-      await page.waitForTimeout(700);
-      assert.notDeepEqual(
-        pizza,
-        await captureCanvas(page, ".flavor-world"),
-        "Nine-piece separation must change the canvas",
-      );
-      await page
-        .getByRole("button", { name: "ნაჭრების შეკვრა", exact: true })
-        .click();
-      const bounds = await page.locator(".flavor-world canvas").boundingBox();
-      await page.mouse.move(viewport.width / 2, bounds.y + bounds.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(
-        viewport.width / 2 + 65,
-        bounds.y + bounds.height / 2 + 15,
-        { steps: 6 },
-      );
-      await page.mouse.up();
-      for (const name of ["ოთხი ყველი", "მარგარიტა", "სოკო"]) {
-        await page.getByRole("tab", { name: new RegExp(name) }).click();
-        await page.locator('.flavor-world [data-ready="true"]').waitFor();
-        assert.match(
-          await page
-            .locator(".flavor-world [role=img]")
-            .getAttribute("aria-label"),
-          new RegExp(name),
-        );
-      }
-      await page.getByRole("tab", { name: /სოკო/ }).press("ArrowRight");
-      assert.equal(
-        await page.locator("#taste-tab-0").getAttribute("aria-selected"),
-        "true",
-      );
-      if ([1440, 390].includes(viewport.width))
-        await page.screenshot({
-          path: `${output}/flavors-${viewport.width}.png`,
-        });
-      await page
-        .getByRole("button", { name: "ეს ჩემი გემოა", exact: true })
-        .click();
-      await page.locator("dialog[open]").waitFor();
-      const plus = page.getByRole("button", {
-        name: "ერთით მეტი",
-        exact: true,
-      });
-      for (let i = 1; i < 9; i++) await plus.click();
-      assert.equal(await page.locator("dialog output").innerText(), "9");
-      assert.ok(await plus.isDisabled());
-      const minus = page.getByRole("button", {
-        name: "ერთით ნაკლები",
-        exact: true,
-      });
-      for (let i = 9; i > 1; i--) await minus.click();
-      assert.ok(await minus.isDisabled());
-      assert.match(
-        await page.locator("dialog").innerText(),
-        /გადახდა და შეკვეთების მიღება ჯერ არ ჩართულა/,
-      );
-      if ([1440, 390].includes(viewport.width))
-        await page.screenshot({
-          path: `${output}/selection-${viewport.width}.png`,
-        });
-      await page.keyboard.press("Escape");
-      await page.locator("dialog").waitFor({ state: "detached" });
-      for (const section of ["geometry", "delivery"]) {
-        await jump(page, `#${section}`);
-        if ([1440, 390].includes(viewport.width))
-          await page.screenshot({
-            path: `${output}/${section}-${viewport.width}.png`,
-          });
-      }
-      await jump(page, "#geometry");
-      assert.equal(await page.locator(".nine-slice").count(), 9);
-      await page.getByRole("button", { name: "გაყოფა", exact: true }).click();
       assert.equal(
         await page
-          .getByRole("button", { name: "შეკვრა", exact: true })
+          .getByRole("button", { name: "ნაჭრების შეკვრა", exact: true })
           .getAttribute("aria-pressed"),
         "true",
       );
       await page
-        .locator("header .drop-languages button")
+        .getByRole("button", { name: "ეს ჩემი გემოა", exact: true })
+        .click();
+      const dialog = page.locator("dialog[open]");
+      await dialog.waitFor();
+      assert.match(
+        await dialog.innerText(),
+        /გადახდა და შეკვეთების მიღება ჯერ არ ჩართულა/,
+      );
+      await dialog.getByRole("radio", { name: "სოკო", exact: true }).click();
+      assert.equal(await dialog.locator("h3").innerText(), "სოკო");
+      const more = dialog.getByRole("button", {
+        name: "ერთით მეტი",
+        exact: true,
+      });
+      for (let n = 1; n < 9; n++) await more.click();
+      assert.ok(await more.isDisabled());
+      assert.equal(await dialog.locator("output").innerText(), "9");
+      const less = dialog.getByRole("button", {
+        name: "ერთით ნაკლები",
+        exact: true,
+      });
+      for (let n = 9; n > 1; n--) await less.click();
+      assert.ok(await less.isDisabled());
+      await page.screenshot({
+        path:
+          output +
+          "/selection-" +
+          viewport.width +
+          "x" +
+          viewport.height +
+          ".png",
+      });
+      await page.keyboard.press("Escape");
+      await page.locator("dialog").waitFor({ state: "detached" });
+      await page
+        .locator("header .journey-languages button")
         .filter({ hasText: "EN" })
         .click();
       assert.equal(await page.locator("html").getAttribute("lang"), "en");
       assert.equal(
-        await page.locator(".hero-tagline h2").innerText(),
-        "Pizza at the right angle.",
+        await page.locator("#moment-0 h2").innerText(),
+        "Inside the flavor.",
       );
-      await checkWidth(page, viewport.width);
+      await widthCheck(page, viewport);
       assert.doesNotMatch(
         await page.locator("body").innerText(),
         /\d+\s*(₾|GEL)/,
       );
       await page
-        .locator("header .drop-languages button")
+        .locator("header .journey-languages button")
         .filter({ hasText: "GE" })
         .click();
-      if (viewport.width < 760) {
-        await page
-          .getByRole("button", { name: "ნავიგაციის გახსნა", exact: true })
-          .click();
-        await page.locator("#drop-mobile-nav a[href='#flavors']").click();
-        assert.equal(
-          await page.locator(".mobile-toggle").getAttribute("aria-expanded"),
-          "false",
-        );
-      }
+      await page.locator(".timeline-stops button").nth(0).click();
+      await page.waitForFunction(
+        () => document.querySelector(".journey-page").dataset.chapter === "0",
+      );
+      await page.getByRole("button", { name: "შემოდი", exact: true }).click();
+      await page.waitForFunction(
+        () => document.querySelector(".journey-page").dataset.chapter === "1",
+      );
       console.log(
         JSON.stringify({
           viewport,
-          pizzaPixels: pixels,
-          box: "passed",
+          scenePixels: scenes,
+          world: "passed",
           flavors: "passed",
-          selection: "passed",
+          dialog: "passed",
           language: "passed",
+          navigation: "passed",
         }),
       );
       await page.close();
@@ -264,22 +235,25 @@ async function checkWidth(page, width) {
       reducedMotion: "reduce",
     });
     await reduced.goto(origin, { waitUntil: "networkidle" });
-    await reduced.locator('.hero-world [data-ready="true"]').waitFor();
-    const first = await captureCanvas(reduced, ".hero-world");
+    await reduced.locator(".journey-world[data-ready=true]").waitFor();
+    await reduced.waitForTimeout(1000);
+    const still = await reduced.screenshot();
     await reduced.waitForTimeout(500);
     assert.deepEqual(
-      first,
-      await captureCanvas(reduced, ".hero-world"),
-      "Reduced-motion scenes must stop floating",
+      still,
+      await reduced.screenshot(),
+      "Reduced-motion rendering must be static",
     );
+    await chapter(reduced, 3);
+    const before = await reduced.screenshot();
     await reduced
-      .getByRole("button", { name: "ყუთის დახურვა", exact: true })
+      .getByRole("button", { name: "ნაჭრების გაშლა", exact: true })
       .click();
     await reduced.waitForTimeout(100);
     assert.notDeepEqual(
-      first,
-      await captureCanvas(reduced, ".hero-world"),
-      "Manual control must work with reduced motion",
+      before,
+      await reduced.screenshot(),
+      "Manual slice control must work in reduced motion",
     );
     await reduced.close();
     const fallback = await browser.newPage({
@@ -292,21 +266,25 @@ async function checkWidth(page, width) {
       };
     });
     await fallback.goto(origin, { waitUntil: "networkidle" });
-    const photograph = fallback.locator(".hero-world .square-world > img");
-    await photograph.waitFor();
+    const photo = fallback.locator(".journey-fallback img");
+    await photo.waitFor();
     assert.ok(
-      await photograph.evaluate(
-        (image) =>
-          image.complete &&
-          image.naturalWidth > 0 &&
-          getComputedStyle(image).visibility !== "hidden",
-      ),
+      await photo.evaluate((image) => image.complete && image.naturalWidth > 0),
     );
-    await fallback.screenshot({ path: `${output}/fallback-390.png` });
+    await fallback
+      .locator("#moment-3")
+      .evaluate((node) => node.scrollIntoView({ behavior: "instant" }));
+    await fallback
+      .locator("#moment-3 .journey-flavors")
+      .getByRole("radio", { name: "მარგარიტა", exact: true })
+      .click();
+    assert.match(await photo.getAttribute("src"), /margherita/);
+    await fallback.screenshot({ path: output + "/fallback-390.png" });
     await fallback.close();
-    assert.deepEqual(errors, [], `Browser errors: ${errors.join("; ")}`);
+    assert.deepEqual(errors, [], "Browser errors: " + errors.join("; "));
     console.log(
-      `PASS: six viewports, real WebGL pixels, box motion, slice separation, flavor changes, quantity limits, dialogs, GE/EN, reduced motion, and photographic fallback. Screenshots: ${output}`,
+      "PASS: six viewports, five nonblank 3D chapters, shared WebGL scene, GE/EN, flavor selection, slice controls, quantity limits, dialogs, chapter navigation, reduced motion, and no-WebGL fallback. Screenshots: " +
+        output,
     );
   } finally {
     await browser.close();

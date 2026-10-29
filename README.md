@@ -12,20 +12,24 @@ pnpm dev
 
 Open http://localhost:3000. Run `pnpm build` for the production build.
 
-## Square Drop
+## Inside The Flavor
 
 This is a new visual direction, using only the original logo and square-pizza
 brand concept. The previous landing page is not used by the application route.
 
-- A physical 3D delivery box opens and closes in the light, poster-style hero.
-- The dark flavor studio has four freshly generated photographic textures,
-  real pizza thickness, pointer/keyboard rotation, and nine separable slices.
-- A scroll-driven nine-piece composition leads into the delivery route.
-- Rendering pauses offscreen and in hidden tabs. Reduced motion, constrained
-  mobile pixel density, context restoration, and photographic fallbacks apply.
-- Native selection dialogs include quantity controls and instant GE/EN switching.
-- New copy and product metadata live in `components/drop-content.ts`.
-- Image-generation prompts are recorded in `design/asset-prompts.json`.
+- One full-bleed WebGL world follows a five-chapter camera journey: the oven,
+  ingredients, the 30x30 square assembling, nine slices, and a delivery box.
+- Ingredient photographs are mapped to bent surfaces in 3D space. Four pizza
+  flavors have photographic tops, modeled crusts, and separable pieces.
+- Chapter buttons and a direct flavor link keep the experience accessible
+  without requiring the full scroll sequence.
+- Rendering pauses in hidden tabs. Mobile resolution/frame-rate limits, reduced
+  motion, context restoration, and photographic fallbacks apply.
+- Native selection dialogs include flavor and quantity controls and GE/EN support.
+- The narrative is in `components/journey-content.ts`; product copy and flavor
+  metadata remain in `components/drop-content.ts`.
+- New ingredient prompts and paths are in `design/journey-assets.json`. Pizza
+  texture prompts remain in `design/asset-prompts.json`.
 - FiraGO is self-hosted as WOFF2; its OFL is in `public/fonts/FiraGO-OFL.txt`.
 - Wolt and Glovo are launch placeholders. The site does not process orders or
   payments yet. No prices are displayed.
@@ -39,8 +43,8 @@ pnpm exec playwright install chromium
 pnpm verify:browser
 ```
 
-The check covers six desktop/mobile viewports, WebGL image pixels, box motion,
-slice separation, flavor selection, quantity limits, dialogs, GE/EN switching,
-reduced motion, and WebGL fallback. Screenshots go to `/private/tmp/90pizza-review`.
+The check covers six desktop/mobile viewports, five nonblank 3D chapters, chapter
+navigation, slice separation, flavor selection, quantity limits, dialogs, GE/EN,
+reduced motion, and WebGL fallback. Screenshots go to `/private/tmp/90pizza-journey-review`.
 Set `PREVIEW_URL`, `REVIEW_OUTPUT`, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to override
 the preview address, screenshot directory, or browser executable.
