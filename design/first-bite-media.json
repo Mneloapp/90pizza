@@ -1,0 +1,49 @@
+{
+  "type": "generated-concept-product-film",
+  "provider": "OpenArt",
+  "model": "MiniMax H3",
+  "approvedGenerationCount": 1,
+  "approvedCredits": 450,
+  "requestedDurationSeconds": 5,
+  "requestedResolution": "2K",
+  "requestedAspectRatio": "16:9",
+  "historyId": "sjAcC4Wrx2aULtfj77y4",
+  "projectId": "Mmb9gM4du9YiRjvMHhy7",
+  "resourceId": "SoSdEnN8DszHepqFMlmZ",
+  "source": "https://cdn.openart.ai/openart-ai/production/2026-10/create-video/gwAz54Gqo5MlmArlTZub/output_aigc_1793254201267_5dc21e42.mp4",
+  "sourceWidth": 2560,
+  "sourceHeight": 1440,
+  "sourceDurationSeconds": 5.167,
+  "framesPerSecond": 24,
+  "files": {
+    "desktop": {
+      "path": "public/media/first-bite-desktop.mp4",
+      "width": 1600,
+      "height": 900,
+      "encoding": "H.264 CRF 22, AAC 96k, faststart"
+    },
+    "mobile": {
+      "path": "public/media/first-bite-mobile.mp4",
+      "width": 960,
+      "height": 540,
+      "encoding": "H.264 CRF 23, AAC 64k, faststart"
+    },
+    "scroll": {
+      "path": "public/media/first-bite-scrub.mp4",
+      "width": 1280,
+      "height": 720,
+      "encoding": "H.264 CRF 25, all-intra, no audio, faststart"
+    },
+    "poster": {
+      "path": "public/media/first-bite-poster.webp",
+      "timeSeconds": 0.08,
+      "width": 1600
+    },
+    "detail": {
+      "path": "public/media/first-bite-detail.webp",
+      "timeSeconds": 3.15,
+      "width": 1600
+    }
+  },
+  "usage": "Website visual prototype; not a photograph or recording of a manufactured 90pizza product. No additional paid generation was used for this implementation."
+}

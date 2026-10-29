@@ -1,5 +1,5 @@
-import PizzaJourney from "@/components/PizzaJourney";
+import AppetitePage from "@/components/AppetitePage";
 
 export default function Home() {
-  return <PizzaJourney />;
+  return <AppetitePage />;
 }

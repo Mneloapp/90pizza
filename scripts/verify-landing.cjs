@@ -2,59 +2,86 @@ const { chromium } = require("playwright");
 const sharp = require("sharp");
 const fs = require("node:fs/promises");
 const assert = require("node:assert/strict");
+
 const origin = process.env.PREVIEW_URL || "http://127.0.0.1:3000";
 const output =
-  process.env.REVIEW_OUTPUT || "/private/tmp/90pizza-journey-review";
+  process.env.REVIEW_OUTPUT || "/private/tmp/90pizza-appetite-review";
+const viewports = [
+  { width: 1440, height: 1000 },
+  { width: 390, height: 844 },
+  { width: 768, height: 1024 },
+  { width: 320, height: 740 },
+  { width: 320, height: 568 },
+  { width: 844, height: 390 },
+].filter(
+  (viewport) =>
+    !process.env.VIEWPORT ||
+    process.env.VIEWPORT === `${viewport.width}x${viewport.height}`,
+);
 
-async function warmPixels(buffer) {
+async function geometryCheck(page, viewport) {
+  const result = await page.evaluate(() => ({
+    overflow: document.body.scrollWidth > document.documentElement.clientWidth,
+    clipped: [
+      ...document.querySelectorAll(
+        "h1,h2,h3,.action-button,.flavor-filters button",
+      ),
+    ]
+      .filter((n) => n.clientWidth && n.scrollWidth > n.clientWidth + 2)
+      .map((n) => n.textContent),
+  }));
+  assert.equal(
+    result.overflow,
+    false,
+    "Horizontal overflow: " + JSON.stringify(viewport),
+  );
+  assert.deepEqual(
+    result.clipped,
+    [],
+    "Clipped text: " + JSON.stringify(viewport),
+  );
+}
+async function jump(page, selector) {
+  await page
+    .locator(selector)
+    .evaluate((node) =>
+      node.scrollIntoView({ behavior: "instant", block: "start" }),
+    );
+  await page.waitForTimeout(750);
+}
+async function coloredPixels(buffer) {
   const { data, info } = await sharp(buffer)
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  let count = 0;
-  for (let i = 0; i < data.length; i += info.channels)
+  let red = 0,
+    warm = 0,
+    redMinX = info.width,
+    redMaxX = 0;
+  for (let i = 0; i < data.length; i += info.channels) {
     if (
-      data[i] > 90 &&
-      data[i] > data[i + 1] * 1.3 &&
-      data[i] > data[i + 2] * 1.3
+      data[i] > 100 &&
+      data[i] > data[i + 1] * 1.7 &&
+      data[i] > data[i + 2] * 1.7
+    ) {
+      red++;
+      const x = (i / info.channels) % info.width;
+      redMinX = Math.min(redMinX, x);
+      redMaxX = Math.max(redMaxX, x);
+    }
+    if (
+      data[i] > 100 &&
+      data[i] > data[i + 1] * 1.15 &&
+      data[i + 1] > data[i + 2] * 1.2
     )
-      count++;
-  return count;
+      warm++;
+  }
+  return { red, warm, redMinX, redMaxX, width: info.width };
 }
-async function chapter(page, index) {
-  await page
-    .locator("#moment-" + index)
-    .evaluate((node) =>
-      node.scrollIntoView({ block: "start", behavior: "instant" }),
-    );
-  await page.waitForTimeout(1300);
-  await page.waitForFunction(
-    (index) =>
-      Math.abs(
-        Number(document.querySelector(".journey-world").dataset.progress) -
-          index,
-      ) < 0.015,
-    index,
-  );
+async function screenshot(page, name) {
+  return page.screenshot({ path: `${output}/${name}.png` });
 }
-async function widthCheck(page, viewport) {
-  const dimensions = await page.evaluate(() => ({
-    body: document.body.scrollWidth,
-    viewport: document.documentElement.clientWidth,
-  }));
-  assert.ok(
-    dimensions.body <= dimensions.viewport,
-    "Horizontal overflow at " + viewport.width,
-  );
-  const clipped = await page
-    .locator("h1,h2,h3,.journey-cta,.journey-flavors button")
-    .evaluateAll((nodes) =>
-      nodes
-        .filter((node) => node.scrollWidth > node.clientWidth + 2)
-        .map((node) => node.textContent),
-    );
-  assert.deepEqual(clipped, [], "Clipped text at " + viewport.width);
-}
+
 (async () => {
   await fs.mkdir(output, { recursive: true });
   const browser = await chromium.launch({
@@ -67,14 +94,8 @@ async function widthCheck(page, viewport) {
   });
   const errors = [];
   try {
-    for (const viewport of [
-      { width: 1440, height: 1000 },
-      { width: 390, height: 844 },
-      { width: 768, height: 1024 },
-      { width: 320, height: 740 },
-      { width: 320, height: 568 },
-      { width: 844, height: 390 },
-    ]) {
+    for (const viewport of viewports) {
+      const tag = viewport.width + "x" + viewport.height;
       const page = await browser.newPage({
         viewport,
         deviceScaleFactor: 1,
@@ -86,225 +107,291 @@ async function widthCheck(page, viewport) {
           errors.push(response.status() + " " + response.url());
       });
       await page.goto(origin, { waitUntil: "networkidle" });
-      await page
-        .locator(".journey-world[data-ready=true]")
-        .waitFor({ timeout: 30000 });
       await page.evaluate(() => document.fonts.ready);
       assert.equal(await page.locator("html").getAttribute("lang"), "ka");
-      assert.equal(
-        await page.locator("canvas").count(),
-        1,
-        "The journey must share a single WebGL world",
-      );
-      await widthCheck(page, viewport);
-      const scenes = [];
-      for (let i = 0; i < 5; i++) {
-        await chapter(page, i);
-        assert.equal(
-          await page.locator(".journey-page").getAttribute("data-chapter"),
-          String(i),
-        );
-        const picture = await page.screenshot();
-        const canvasFrame = await page.screenshot({
-          style:
-            ".journey-header,.journey-rail,.journey-timeline,.journey-footer{visibility:hidden!important}",
-        });
-        const pixels = await warmPixels(canvasFrame);
-        assert.ok(
-          pixels > 1800,
-          "Empty scene at " + viewport.width + " chapter " + i + ": " + pixels,
-        );
-        scenes.push(pixels);
-        await fs.writeFile(
-          output +
-            "/scene-" +
-            viewport.width +
-            "x" +
-            viewport.height +
-            "-" +
-            i +
-            ".png",
-          picture,
-        );
-      }
-      await chapter(page, 3);
-      await page.waitForFunction(
-        () =>
-          Number(document.querySelector(".journey-world").dataset.cheesePull) >
-          0.6,
-      );
-      await page
-        .getByRole("button", { name: "ნაჭრის დაბრუნება", exact: true })
-        .click();
-      await page.waitForFunction(
-        () =>
-          document.querySelector(".journey-world").dataset.cheesePull === "0",
-      );
-      await page
-        .getByRole("button", { name: "ყველის გაწელვა", exact: true })
-        .click();
-      await page.waitForFunction(
-        () =>
-          Number(document.querySelector(".journey-world").dataset.cheesePull) >
-          0.6,
-      );
-      const selector = page.locator("#moment-3 .journey-flavors");
-      await selector
-        .getByRole("radio", { name: "ოთხი ყველი", exact: true })
-        .click();
-      assert.equal(
-        await selector
-          .getByRole("radio", { name: "ოთხი ყველი", exact: true })
-          .getAttribute("aria-checked"),
-        "true",
-      );
-      await selector
-        .getByRole("radio", { name: "ოთხი ყველი", exact: true })
-        .press("ArrowRight");
-      assert.equal(
-        await selector
-          .getByRole("radio", { name: "მარგარიტა", exact: true })
-          .getAttribute("aria-checked"),
-        "true",
-      );
-      await page
-        .getByRole("button", { name: "ნაჭრების გაშლა", exact: true })
-        .click();
-      assert.equal(
+      await geometryCheck(page, viewport);
+      assert.ok(
         await page
-          .getByRole("button", { name: "ნაჭრების შეკვრა", exact: true })
-          .getAttribute("aria-pressed"),
-        "true",
+          .locator(".spec-strip")
+          .evaluate((n) => n.getBoundingClientRect().top < innerHeight),
+        "Next section missing from first viewport",
+      );
+      const heroVideo = page.locator(".hero-film video");
+      await page.locator(".hero-film[data-ready=true]").waitFor();
+      await page.waitForTimeout(800);
+      if (!(await heroVideo.evaluate((v) => v.paused))) {
+        await page
+          .getByRole("button", { name: "ვიდეოს შეჩერება", exact: true })
+          .click();
+      }
+      const filmEnded = await heroVideo.evaluate((v) => v.ended);
+      await page
+        .getByRole("button", {
+          name: filmEnded ? "ვიდეოს თავიდან ჩართვა" : "ვიდეოს ჩართვა",
+          exact: true,
+        })
+        .click();
+      const beforeTime = await heroVideo.evaluate((v) => v.currentTime);
+      await page.waitForFunction(
+        (time) =>
+          document.querySelector(".hero-film video").currentTime > time + 0.2,
+        beforeTime,
       );
       await page
+        .getByRole("button", { name: "ვიდეოს შეჩერება", exact: true })
+        .click();
+      assert.equal(await heroVideo.evaluate((v) => v.paused), true);
+      await page
+        .getByRole("button", { name: "ხმის ჩართვა", exact: true })
+        .click();
+      assert.equal(await heroVideo.evaluate((v) => v.muted), false);
+      await page
+        .getByRole("button", { name: "ხმის გამორთვა", exact: true })
+        .click();
+      const hero = await screenshot(page, "hero-" + tag);
+      assert.ok(
+        (await coloredPixels(hero)).warm > 5000,
+        "Food missing from hero: " + tag,
+      );
+
+      await jump(page, "#format");
+      await screenshot(page, "format-" + tag);
+      assert.equal(await page.locator(".nine-grid span").count(), 9);
+      await page.locator(".bite-chapter").evaluate((n) => {
+        const start = n.getBoundingClientRect().top + scrollY - 76;
+        scrollTo({
+          top: start + (n.offsetHeight - innerHeight + 76) * 0.6,
+          behavior: "instant",
+        });
+      });
+      await page.waitForFunction(
+        () => document.querySelector(".bite-sticky video").currentTime > 1.5,
+      );
+      await screenshot(page, "bite-" + tag);
+      const slider = page.getByRole("slider", { name: "ნაჭრის აწევა" });
+      await slider.focus();
+      await slider.press("End");
+      await page.waitForFunction(
+        () => document.querySelector(".bite-sticky video").currentTime > 4.5,
+      );
+      await slider.press("Home");
+      await page.waitForFunction(
+        () => document.querySelector(".bite-sticky video").currentTime < 0.1,
+      );
+
+      await jump(page, "#menu");
+      assert.equal(await page.locator(".flavor-item").count(), 6);
+      const sources = await page
+        .locator(".flavor-photo img")
+        .evaluateAll((nodes) => nodes.map((n) => n.getAttribute("src")));
+      assert.equal(new Set(sources).size, 6, "Menu images must be unique");
+      assert.equal(
+        await page.getByText(/\d+\s*₾/).count(),
+        0,
+        "Prices must not appear",
+      );
+      await page.getByRole("button", { name: "ხორცით", exact: true }).click();
+      assert.equal(await page.locator(".flavor-item").count(), 2);
+      await page.getByRole("button", { name: "უხორცო", exact: true }).click();
+      assert.equal(await page.locator(".flavor-item").count(), 4);
+      await page.getByRole("button", { name: "ყველა", exact: true }).click();
+      await screenshot(page, "menu-" + tag);
+      await page
+        .getByRole("button", { name: "გემოს ნახვა: პეპერონი", exact: true })
+        .click();
+      const dialog = page.getByRole("dialog");
+      await dialog.waitFor({ state: "visible" });
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "რაოდენობის შემცირება", exact: true })
+          .isDisabled(),
+        true,
+      );
+      for (let i = 0; i < 8; i++)
+        await dialog
+          .getByRole("button", { name: "რაოდენობის გაზრდა", exact: true })
+          .click();
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "რაოდენობის გაზრდა", exact: true })
+          .isDisabled(),
+        true,
+      );
+      await dialog
         .getByRole("button", { name: "ეს ჩემი გემოა", exact: true })
         .click();
-      const dialog = page.locator("dialog[open]");
-      await dialog.waitFor();
-      assert.match(
-        await dialog.innerText(),
-        /გადახდა და შეკვეთების მიღება ჯერ არ ჩართულა/,
+      assert.equal(
+        await dialog.locator("[role=status]").textContent(),
+        "შენახულია შენი არჩევანი. შეკვეთები მალე გაიხსნება.",
       );
-      await dialog.getByRole("radio", { name: "სოკო", exact: true }).click();
-      assert.equal(await dialog.locator("h3").innerText(), "სოკო");
-      const more = dialog.getByRole("button", {
-        name: "ერთით მეტი",
-        exact: true,
-      });
-      for (let n = 1; n < 9; n++) await more.click();
-      assert.ok(await more.isDisabled());
-      assert.equal(await dialog.locator("output").innerText(), "9");
-      const less = dialog.getByRole("button", {
-        name: "ერთით ნაკლები",
-        exact: true,
-      });
-      for (let n = 9; n > 1; n--) await less.click();
-      assert.ok(await less.isDisabled());
-      await page.screenshot({
-        path:
-          output +
-          "/selection-" +
-          viewport.width +
-          "x" +
-          viewport.height +
-          ".png",
-      });
+      await screenshot(page, "dialog-" + tag);
+      await dialog
+        .getByRole("button", { name: "შემდეგი გემო", exact: true })
+        .click();
+      assert.equal(
+        await dialog.getByRole("heading").textContent(),
+        "მარგარიტა",
+      );
       await page.keyboard.press("Escape");
-      await page.locator("dialog").waitFor({ state: "detached" });
+      await dialog.waitFor({ state: "hidden" });
+      assert.equal(
+        await page.locator("body").evaluate((n) => n.style.overflow),
+        "",
+      );
+
       await page
-        .locator("header .journey-languages button")
-        .filter({ hasText: "EN" })
+        .locator(".site-header .language-switch")
+        .getByRole("button", { name: "EN", exact: true })
         .click();
       assert.equal(await page.locator("html").getAttribute("lang"), "en");
       assert.equal(
-        await page.locator("#moment-0 h2").innerText(),
-        "Inside the flavor.",
-      );
-      await widthCheck(page, viewport);
-      assert.doesNotMatch(
-        await page.locator("body").innerText(),
-        /\d+\s*(₾|GEL)/,
+        await page.locator("#menu-title").textContent(),
+        "The choice is always yours.",
       );
       await page
-        .locator("header .journey-languages button")
-        .filter({ hasText: "GE" })
+        .getByRole("button", {
+          name: "Explore flavor: Four Cheese",
+          exact: true,
+        })
         .click();
-      await page.locator(".timeline-stops button").nth(0).click();
-      await page.waitForFunction(
-        () => document.querySelector(".journey-page").dataset.chapter === "0",
+      assert.equal(
+        await dialog.getByRole("heading").textContent(),
+        "Four Cheese",
       );
-      await page.getByRole("button", { name: "შემოდი", exact: true }).click();
-      await page.waitForFunction(
-        () => document.querySelector(".journey-page").dataset.chapter === "1",
+      await dialog.getByRole("button", { name: "Close", exact: true }).click();
+      await page
+        .locator(".site-header .language-switch")
+        .getByRole("button", { name: "GE", exact: true })
+        .click();
+      if (viewport.width <= 900) {
+        await page
+          .getByRole("button", { name: "ნავიგაციის გახსნა", exact: true })
+          .click();
+        assert.equal(
+          await page.locator("#mobile-navigation").isVisible(),
+          true,
+        );
+        await page
+          .locator("#mobile-navigation")
+          .getByRole("link", { name: "მიტანა", exact: true })
+          .click();
+        assert.equal(
+          await page.locator("#mobile-navigation").isVisible(),
+          false,
+        );
+      }
+      await jump(page, "#delivery");
+      await page
+        .locator(".delivery-box[data-ready=true]")
+        .waitFor({ timeout: 20000 });
+      await page
+        .locator(".delivery-box")
+        .evaluate((n) =>
+          n.scrollIntoView({ block: "center", behavior: "instant" }),
+        );
+      await page.waitForTimeout(650);
+      const bounds = await page.locator(".delivery-box canvas").boundingBox();
+      const visibleClip = (bounds) => ({
+        x: Math.max(0, bounds.x),
+        y: Math.max(0, bounds.y),
+        width:
+          Math.min(bounds.x + bounds.width, viewport.width) -
+          Math.max(0, bounds.x),
+        height:
+          Math.min(bounds.y + bounds.height, viewport.height) -
+          Math.max(0, bounds.y),
+      });
+      const before = await page.screenshot({
+        clip: visibleClip(bounds),
+        style:
+          ".site-header,.box-turn,.delivery-format{visibility:hidden!important}",
+      });
+      assert.ok(
+        (await coloredPixels(before)).red > 2000,
+        "Blank delivery canvas: " + tag,
       );
+      await page
+        .getByRole("button", { name: "ყუთის მობრუნება", exact: true })
+        .click();
+      await page.waitForTimeout(800);
+      const after = await page.screenshot({
+        clip: visibleClip(
+          await page.locator(".delivery-box canvas").boundingBox(),
+        ),
+        style:
+          ".site-header,.box-turn,.delivery-format{visibility:hidden!important}",
+      });
+      const framePixels = await coloredPixels(after);
+      await fs.writeFile(`${output}/box-pixels-${tag}.png`, after);
+      assert.ok(
+        framePixels.redMinX > 5 && framePixels.redMaxX < framePixels.width - 5,
+        "Box clipped horizontally: " + tag + " " + JSON.stringify(framePixels),
+      );
+      assert.notEqual(
+        before.toString("base64"),
+        after.toString("base64"),
+        "Box is not interactive",
+      );
+      await screenshot(page, "delivery-" + tag);
+      await geometryCheck(page, viewport);
       console.log(
-        JSON.stringify({
-          viewport,
-          scenePixels: scenes,
-          world: "passed",
-          flavors: "passed",
-          dialog: "passed",
-          language: "passed",
-          navigation: "passed",
-        }),
+        "PASS",
+        tag,
+        "film, scroll, six flavors, filters, dialog, language, 3D box",
       );
       await page.close();
     }
+
     const reduced = await browser.newPage({
       viewport: { width: 390, height: 844 },
       reducedMotion: "reduce",
     });
     await reduced.goto(origin, { waitUntil: "networkidle" });
-    await reduced.locator(".journey-world[data-ready=true]").waitFor();
-    await reduced.waitForTimeout(1000);
-    const still = await reduced.screenshot();
-    await reduced.waitForTimeout(500);
-    assert.deepEqual(
-      still,
-      await reduced.screenshot(),
-      "Reduced-motion rendering must be static",
+    assert.equal(
+      await reduced.locator(".hero-film video").evaluate((v) => v.paused),
+      true,
     );
-    await chapter(reduced, 3);
-    const before = await reduced.screenshot();
-    await reduced
-      .getByRole("button", { name: "ნაჭრების გაშლა", exact: true })
-      .click();
-    await reduced.waitForTimeout(100);
-    assert.notDeepEqual(
-      before,
-      await reduced.screenshot(),
-      "Manual slice control must work in reduced motion",
+    await jump(reduced, "#bite");
+    assert.equal(
+      await reduced.locator(".bite-sticky video").getAttribute("src"),
+      null,
     );
+    await screenshot(reduced, "reduced-motion");
     await reduced.close();
+
     const fallback = await browser.newPage({
       viewport: { width: 390, height: 844 },
     });
+    await fallback.route("**/media/*.mp4", (route) => route.abort());
     await fallback.addInitScript(() => {
-      const original = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
-        return /webgl/.test(kind) ? null : original.call(this, kind, ...args);
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+        if (
+          type === "webgl" ||
+          type === "webgl2" ||
+          type === "experimental-webgl"
+        )
+          return null;
+        return getContext.call(this, type, ...args);
       };
     });
     await fallback.goto(origin, { waitUntil: "networkidle" });
-    const photo = fallback.locator(".journey-fallback img");
-    await photo.waitFor();
-    assert.ok(
-      await photo.evaluate((image) => image.complete && image.naturalWidth > 0),
+    assert.equal(
+      await fallback
+        .locator(".hero-film .film-poster")
+        .evaluate((n) => n.complete && n.naturalWidth > 0),
+      true,
     );
-    await fallback
-      .locator("#moment-3")
-      .evaluate((node) => node.scrollIntoView({ behavior: "instant" }));
-    await fallback
-      .locator("#moment-3 .journey-flavors")
-      .getByRole("radio", { name: "მარგარიტა", exact: true })
-      .click();
-    assert.match(await photo.getAttribute("src"), /margherita/);
-    await fallback.screenshot({ path: output + "/fallback-390.png" });
+    await screenshot(fallback, "media-fallback");
+    await jump(fallback, "#delivery");
+    await fallback.locator(".delivery-box[data-failed=true]").waitFor();
+    assert.equal(await fallback.locator(".box-fallback").isVisible(), true);
+    await screenshot(fallback, "webgl-fallback");
     await fallback.close();
-    assert.deepEqual(errors, [], "Browser errors: " + errors.join("; "));
+    assert.deepEqual(errors, [], "Browser errors");
     console.log(
-      "PASS: six viewports, five nonblank 3D chapters, shared WebGL scene, GE/EN, flavor selection, slice controls, quantity limits, dialogs, chapter navigation, reduced motion, and no-WebGL fallback. Screenshots: " +
-        output,
+      "PASS reduced motion, video fallback, WebGL fallback. Screenshots:",
+      output,
     );
   } finally {
     await browser.close();
