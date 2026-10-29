@@ -21,6 +21,8 @@ brand concept. The previous landing page is not used by the application route.
   ingredients, the 30x30 square assembling, nine slices, and a delivery box.
 - Ingredient photographs are mapped to bent surfaces in 3D space. Four pizza
   flavors have photographic tops, modeled crusts, and separable pieces.
+- Thin crust meshes lift one corner in the sharing chapter, with dynamically
+  deforming cheese strands and a manual pull/return control.
 - Chapter buttons and a direct flavor link keep the experience accessible
   without requiring the full scroll sequence.
 - Rendering pauses in hidden tabs. Mobile resolution/frame-rate limits, reduced

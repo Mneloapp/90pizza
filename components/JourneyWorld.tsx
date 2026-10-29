@@ -12,6 +12,7 @@ type Props = {
   progress: MotionValue<number>;
   texture: string;
   split: boolean;
+  pull: boolean;
   reduced: boolean;
   label: string;
 };
@@ -41,6 +42,7 @@ export default function JourneyWorld({
   progress,
   texture,
   split,
+  pull,
   reduced,
   label,
 }: Props) {
@@ -50,13 +52,13 @@ export default function JourneyWorld({
     load(url: string): void;
     invalidate(): void;
   } | null>(null);
-  const settings = useRef({ split, reduced });
+  const settings = useRef({ split, pull, reduced });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    settings.current = { split, reduced };
+    settings.current = { split, pull, reduced };
     runtime.current?.invalidate();
-  }, [split, reduced]);
+  }, [split, pull, reduced]);
 
   useEffect(() => {
     const element = root.current,
@@ -309,8 +311,60 @@ export default function JourneyWorld({
             [topping, crust, crumb],
             [col - 1, 0, row - 1],
           );
+          mesh.scale.y = 0.3;
           slices.push({ mesh, x: col - 1, z: row - 1 });
         }
+
+      const cheese = new THREE.Group();
+      pizza.add(cheese);
+      const cheeseMaterial = keep(
+        new THREE.MeshPhysicalMaterial({
+          color: "#ffefd1",
+          emissive: "#ffd88a",
+          emissiveIntensity: 0.2,
+          roughness: 0.38,
+          clearcoat: 0.32,
+          clearcoatRoughness: 0.25,
+        }),
+      );
+      const strandOffsets = [-0.42, -0.31, -0.24, -0.08, 0.03, 0.16, 0.39];
+      const strands = Array.from({ length: 14 }, (_, index) => {
+        const edge = index < 7 ? 0 : 1;
+        const offset = strandOffsets[index % 7];
+        const geometry = new THREE.TubeGeometry(
+          new THREE.LineCurve3(new THREE.Vector3(), new THREE.Vector3(0, 1, 0)),
+          20,
+          0.009,
+          6,
+          false,
+        );
+        for (const name of ["position", "normal"]) {
+          const attribute = geometry.getAttribute(name);
+          if (attribute instanceof THREE.BufferAttribute)
+            attribute.setUsage(THREE.DynamicDrawUsage);
+        }
+        const mesh = make(cheese, geometry, cheeseMaterial, [0, 0, 0]);
+        mesh.frustumCulled = false;
+        return {
+          geometry,
+          edge,
+          offset,
+          index,
+          radius:
+            index % 7 === 1 || index % 7 === 4
+              ? 0.024
+              : 0.008 + (index % 3) * 0.003,
+        };
+      });
+      const anchor = new THREE.Vector3(),
+        lifted = new THREE.Vector3(),
+        control = new THREE.Vector3();
+      const center = new THREE.Vector3(),
+        tangent = new THREE.Vector3(),
+        normal = new THREE.Vector3(),
+        binormal = new THREE.Vector3();
+      const upAxis = new THREE.Vector3(0, 1, 0),
+        forwardAxis = new THREE.Vector3(0, 0, 1);
 
       const box = new THREE.Group();
       product.add(box);
@@ -545,6 +599,7 @@ export default function JourneyWorld({
         pointerAimX = 0,
         pointerAimY = 0;
       let manualSpread = 0;
+      let cheesePull = 0;
       const canRender = () =>
         !disposed && !failed && !document.hidden && width > 0 && height > 0;
       function invalidate() {
@@ -630,7 +685,108 @@ export default function JourneyWorld({
             -slice.x * spread * 0.12,
           );
         }
-        pizza.position.y = 0;
+        const pullWindow =
+          smooth(2.6, 2.95, stage) * (1 - smooth(3.22, 3.55, stage));
+        const desiredPull = settings.current.pull
+          ? pullWindow * (still ? 0.85 : 0.85 + Math.sin(elapsed * 0.8) * 0.06)
+          : 0;
+        cheesePull = still
+          ? desiredPull
+          : THREE.MathUtils.damp(cheesePull, desiredPull, 7, dt);
+        const corner = slices[8].mesh;
+        corner.position.y += cheesePull * 1.25;
+        corner.position.x += cheesePull * 0.18;
+        corner.position.z += cheesePull * 0.18;
+        corner.rotation.x += cheesePull * 0.1;
+        corner.rotation.z -= cheesePull * 0.11;
+        cheese.visible = cheesePull > 0.012 && stage > 2.45 && stage < 3.65;
+        element!.dataset.cheesePull = cheese.visible
+          ? cheesePull.toFixed(3)
+          : "0";
+        if (cheese.visible) {
+          corner.updateMatrix();
+          slices[7].mesh.updateMatrix();
+          slices[5].mesh.updateMatrix();
+          for (const strand of strands) {
+            const neighbor =
+              strand.edge === 0 ? slices[7].mesh : slices[5].mesh;
+            const liftedOffset =
+              strand.offset * 0.72 + Math.sin(strand.index * 2.13) * 0.035;
+            const anchorOffset =
+              strand.offset + Math.cos(strand.index * 1.8) * 0.025;
+            lifted
+              .set(
+                strand.edge === 0 ? -0.49 : liftedOffset,
+                0.11,
+                strand.edge === 0 ? liftedOffset : -0.49,
+              )
+              .applyMatrix4(corner.matrix);
+            anchor
+              .set(
+                strand.edge === 0 ? 0.49 : anchorOffset,
+                0.11,
+                strand.edge === 0 ? anchorOffset : 0.49,
+              )
+              .applyMatrix4(neighbor.matrix);
+            control.copy(anchor).lerp(lifted, 0.5);
+            control.y -=
+              0.08 + cheesePull * (0.13 + Math.sin(strand.index * 2.7) * 0.055);
+            control.x += Math.sin(strand.index * 1.7) * 0.035;
+            control.z += Math.cos(strand.index * 2.3) * 0.035;
+            const positions = strand.geometry.getAttribute("position"),
+              normals = strand.geometry.getAttribute("normal");
+            for (let ring = 0; ring <= 20; ring++) {
+              const t = ring / 20,
+                inv = 1 - t;
+              center
+                .copy(anchor)
+                .multiplyScalar(inv * inv)
+                .addScaledVector(control, 2 * inv * t)
+                .addScaledVector(lifted, t * t);
+              tangent
+                .copy(control)
+                .sub(anchor)
+                .multiplyScalar(2 * inv)
+                .addScaledVector(binormal.copy(lifted).sub(control), 2 * t)
+                .normalize();
+              normal.crossVectors(tangent, upAxis);
+              if (normal.lengthSq() < 0.0001)
+                normal.crossVectors(tangent, forwardAxis);
+              normal.normalize();
+              binormal.crossVectors(tangent, normal).normalize();
+              const radius =
+                strand.radius * (0.35 + Math.pow(Math.abs(2 * t - 1), 2) * 2.2);
+              for (let side = 0; side <= 6; side++) {
+                const a = (side / 6) * Math.PI * 2,
+                  c = Math.cos(a),
+                  s = Math.sin(a),
+                  vertex = ring * 7 + side;
+                const nx = (normal.x * c) / 1.7 + (binormal.x * s) / 0.5,
+                  ny = (normal.y * c) / 1.7 + (binormal.y * s) / 0.5,
+                  nz = (normal.z * c) / 1.7 + (binormal.z * s) / 0.5;
+                const normalLength = Math.hypot(c / 1.7, s / 0.5);
+                positions.setXYZ(
+                  vertex,
+                  center.x +
+                    (normal.x * c * 1.7 + binormal.x * s * 0.5) * radius,
+                  center.y +
+                    (normal.y * c * 1.7 + binormal.y * s * 0.5) * radius,
+                  center.z +
+                    (normal.z * c * 1.7 + binormal.z * s * 0.5) * radius,
+                );
+                normals.setXYZ(
+                  vertex,
+                  nx / normalLength,
+                  ny / normalLength,
+                  nz / normalLength,
+                );
+              }
+            }
+            positions.needsUpdate = true;
+            normals.needsUpdate = true;
+          }
+        }
+        pizza.position.y = -0.13 * smooth(3.3, 3.72, stage);
         const pizzaOpacity = Math.min(
           1,
           1 - smooth(0.3, 0.65, stage) + smooth(1.2, 1.7, stage),
@@ -640,7 +796,7 @@ export default function JourneyWorld({
           material.transparent = pizzaOpacity < 1;
           material.opacity = pizzaOpacity;
         }
-        pizza.scale.set(1, 0.62, 1);
+        pizza.scale.set(1, 1, 1);
         box.visible = stage > 3.28;
         box.scale.setScalar(Math.max(0.001, smooth(3.28, 3.72, stage)));
         hinge.rotation.x = -1.88 * (1 - smooth(3.65, 4, stage));

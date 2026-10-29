@@ -128,6 +128,26 @@ async function widthCheck(page, viewport) {
         );
       }
       await chapter(page, 3);
+      await page.waitForFunction(
+        () =>
+          Number(document.querySelector(".journey-world").dataset.cheesePull) >
+          0.6,
+      );
+      await page
+        .getByRole("button", { name: "ნაჭრის დაბრუნება", exact: true })
+        .click();
+      await page.waitForFunction(
+        () =>
+          document.querySelector(".journey-world").dataset.cheesePull === "0",
+      );
+      await page
+        .getByRole("button", { name: "ყველის გაწელვა", exact: true })
+        .click();
+      await page.waitForFunction(
+        () =>
+          Number(document.querySelector(".journey-world").dataset.cheesePull) >
+          0.6,
+      );
       const selector = page.locator("#moment-3 .journey-flavors");
       await selector
         .getByRole("radio", { name: "ოთხი ყველი", exact: true })

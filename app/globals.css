@@ -194,6 +194,11 @@ a:focus-visible {
   border-color: #e01010;
   transform: rotate(-6deg);
 }
+.journey-icon[aria-pressed="true"] {
+  color: #e01010;
+  border-color: #e01010;
+  background: #e0101010;
+}
 .journey-bag {
   width: auto;
   border: 0;

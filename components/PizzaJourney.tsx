@@ -190,6 +190,7 @@ export default function PizzaJourney() {
   const [language, setLanguage] = useState<DropLanguage>("ge");
   const [selected, setSelected] = useState(0);
   const [split, setSplit] = useState(false);
+  const [pull, setPull] = useState(true);
   const [drawer, setDrawer] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const reduced = Boolean(useReducedMotion());
@@ -277,6 +278,7 @@ export default function PizzaJourney() {
                 progress={scrollYProgress}
                 texture={dropFlavors[selected].texture}
                 split={split}
+                pull={pull}
                 reduced={reduced}
                 label={t.scene}
               />
@@ -371,6 +373,16 @@ export default function PizzaJourney() {
                             onClick={() => setSplit(!split)}
                           >
                             <Grid3X3 size={20} />
+                          </button>
+                          <button
+                            type="button"
+                            className="journey-icon"
+                            aria-pressed={pull}
+                            aria-label={pull ? t.returnSlice : t.pullCheese}
+                            title={pull ? t.returnSlice : t.pullCheese}
+                            onClick={() => setPull(!pull)}
+                          >
+                            <ArrowUpRight size={20} />
                           </button>
                         </div>
                       </>
