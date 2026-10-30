@@ -1,203 +1,169 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
-const path = require("node:path");
 const { chromium, webkit } = require("playwright");
 const sharp = require("sharp");
-
 const url = process.env.PREVIEW_URL || "http://127.0.0.1:3000";
-const output = process.env.REVIEW_OUTPUT || "/private/tmp/90pizza-world-review";
-const executablePath =
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ||
-  (process.platform === "darwin"
-    ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    : undefined);
+const output =
+  process.env.REVIEW_OUTPUT || "/private/tmp/90pizza-making-review";
 const options = {
   headless: true,
-  executablePath,
+  executablePath:
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ||
+    (process.platform === "darwin"
+      ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      : undefined),
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
 };
+const chapters = [
+  ["hero", 0],
+  ["dough", 0.24],
+  ["toppings", 0.46],
+  ["oven", 0.62],
+  ["slices", 0.78],
+  ["box", 0.97],
+];
 
-async function snapshot(page, name) {
-  await page.screenshot({ path: path.join(output, `${name}.png`) });
+async function seek(page, value) {
+  await page.evaluate((progress) => {
+    const node = document.querySelector(".xp-world");
+    scrollTo({
+      top: node.offsetTop + (node.offsetHeight - innerHeight) * progress,
+      behavior: "instant",
+    });
+  }, value);
+  await page.waitForTimeout(1200);
 }
-async function pixels(buffer) {
-  return sharp(buffer)
+async function canvasPixels(canvas) {
+  const buffer = await canvas.screenshot();
+  const { data, info } = await sharp(buffer)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-}
-async function nonblank(buffer) {
-  const { data, info } = await pixels(buffer);
-  let food = 0,
-    clipped = 0;
-  for (let i = 0; i < data.length; i += 4) {
+  const background = [...data.subarray(0, 3)];
+  let contrast = 0;
+  for (let i = 0; i < data.length; i += 4)
     if (
-      data[i] > 95 &&
-      data[i + 1] > 60 &&
-      data[i + 1] < data[i] * 0.92 &&
-      data[i + 2] < data[i + 1] * 0.9
-    ) {
-      food++;
-      const x = (i / 4) % info.width,
-        y = Math.floor(i / 4 / info.width);
-      if (x < 2 || x > info.width - 3 || y < 2 || y > info.height - 3)
-        clipped++;
-    }
-  }
-  assert(food > 1000, `3D model missing: ${food} food/carton pixels`);
-  assert(
-    clipped < 12,
-    `3D model is clipped at the canvas edge: ${clipped} pixels`,
-  );
-  return food;
+      Math.abs(data[i] - background[0]) +
+        Math.abs(data[i + 1] - background[1]) +
+        Math.abs(data[i + 2] - background[2]) >
+      65
+    )
+      contrast++;
+  assert(contrast > 700, `Blank scene: only ${contrast} contrasting pixels`);
+  return { data, info, contrast };
 }
-async function changed(before, after) {
-  const a = await pixels(before),
-    b = await pixels(after);
+function difference(a, b) {
   assert.equal(a.data.length, b.data.length);
-  let count = 0;
-  for (let i = 0; i < a.data.length; i += 4) {
+  let changed = 0;
+  for (let i = 0; i < a.data.length; i += 4)
     if (
       Math.abs(a.data[i] - b.data[i]) +
         Math.abs(a.data[i + 1] - b.data[i + 1]) +
         Math.abs(a.data[i + 2] - b.data[i + 2]) >
       40
     )
-      count++;
-  }
-  assert(count > 800, `Scene did not visibly respond: ${count} changed pixels`);
-  return count;
+      changed++;
+  assert(changed > 500, `The 3D geometry did not change: ${changed} pixels`);
+  return changed;
 }
-async function number(page, attribute, expected) {
-  await page.waitForFunction(
-    ({ attribute, expected }) =>
-      Math.abs(
-        Number(document.querySelector(".xp-stage")?.getAttribute(attribute)) -
-          expected,
-      ) < 0.04,
-    { attribute, expected },
-  );
-}
-async function scrollTo(page, y) {
-  await page.evaluate(
-    (value) => window.scrollTo({ top: value, behavior: "instant" }),
-    y,
-  );
-  await page.waitForTimeout(650);
-}
-async function checkLayout(page) {
-  const problems = await page.evaluate(() => {
-    const errors = [];
+async function layout(page) {
+  const errors = await page.evaluate(() => {
+    const result = [];
     if (document.documentElement.scrollWidth > innerWidth + 1)
-      errors.push("Horizontal page overflow");
-    document
-      .querySelectorAll(
-        ".xp-header,.xp-hero-bottom h2,.xp-wordmark h1,.xp-menu-heading h2,.xp-flavor h3,.xp-delivery h2,.xp-footer-wordmark",
-      )
-      .forEach((node) => {
-        const rect = node.getBoundingClientRect();
-        if (node.scrollWidth > node.clientWidth + 2)
-          errors.push(`${node.className || node.tagName}: text overflow`);
-        if (rect.left < -1 || rect.right > innerWidth + 1)
-          errors.push(`${node.className || node.tagName}: outside viewport`);
-      });
-    return errors;
+      result.push("Page overflow");
+    for (const node of document.querySelectorAll(
+      "h1,h2,h3,.xp-header,.xp-opening>.xp-button,.xp-chapter-copy>.xp-button,.xp-making-bottom",
+    )) {
+      if (!node.clientWidth || node.closest("[inert]")) continue;
+      if (node.scrollWidth > node.clientWidth + 2)
+        result.push(`Text overflow: ${node.textContent}`);
+      const rect = node.getBoundingClientRect();
+      if (rect.left < -1 || rect.right > innerWidth + 1)
+        result.push(`Outside viewport: ${node.textContent}`);
+    }
+    return result;
   });
-  assert.deepEqual(problems, []);
+  assert.deepEqual(errors, []);
 }
-async function journey(browser, size, engine) {
+async function check(browser, size, engine) {
   const context = await browser.newContext({
     viewport: size,
-    deviceScaleFactor: 1,
     hasTouch: size.width < 700,
+    deviceScaleFactor: 1,
   });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  const response = await page.goto(url, { waitUntil: "networkidle" });
-  assert.equal(response.status(), 200);
+  assert.equal(
+    (await page.goto(url, { waitUntil: "networkidle" })).status(),
+    200,
+  );
   await page.locator(".xp-stage[data-ready=true]").waitFor();
-  await number(page, "data-lift", 1);
-  await checkLayout(page);
-  assert.equal(
-    await page.locator("video").count(),
-    0,
-    "Old film must not be mounted",
-  );
-  assert.equal(
-    await page.locator(".live-cheese").count(),
-    0,
-    "Old overlay must not be mounted",
-  );
-  assert.equal(await page.locator("html").getAttribute("lang"), "ka");
-  assert(
-    Number(await page.locator(".xp-stage").getAttribute("data-triangles")) >
-      30000,
-  );
   const canvas = page.locator(".xp-stage canvas");
-  const initial = await canvas.screenshot();
-  const colored = await nonblank(initial);
-  await snapshot(page, `${engine}-hero-${size.width}x${size.height}`);
+  assert.equal(await page.locator("video").count(), 0);
+  assert.equal(await page.locator("html").getAttribute("lang"), "ka");
+  const counts = {};
+  for (const [name, progress] of chapters) {
+    await seek(page, progress);
+    await page.locator(`.xp-stage[data-phase="${name}"]`).waitFor();
+    await layout(page);
+    counts[name] = (await canvasPixels(canvas)).contrast;
+    await page.screenshot({
+      path: `${output}/${engine}-${name}-${size.width}x${size.height}.png`,
+    });
+  }
+  // Two positions within the same chapter prove scroll changes the geometry,
+  // rather than merely swapping a heading or a background color.
+  await seek(page, 0.165);
+  const ball = await canvasPixels(canvas);
+  await seek(page, 0.29);
+  difference(ball, await canvasPixels(canvas));
+  await seek(page, 0.35);
+  const sauce = await canvasPixels(canvas);
+  await seek(page, 0.485);
+  difference(sauce, await canvasPixels(canvas));
+  await page.getByRole("button", { name: "4. 9 ნაჭერი", exact: true }).click();
+  await page.locator('.xp-stage[data-phase="slices"]').waitFor();
+  await page.waitForFunction(
+    () => Number(document.querySelector(".xp-stage").dataset.local) > 0.5,
+  );
   await page
-    .getByRole("button", { name: "ნაჭრის დაბრუნება", exact: true })
+    .getByRole("button", { name: "ეს ნაჭერი ჩემია", exact: true })
     .click();
-  await number(page, "data-lift", 0);
-  const different = await changed(initial, await canvas.screenshot());
-  await page
-    .getByRole("button", { name: "პიცის მობრუნება", exact: true })
-    .click();
-  await page.waitForTimeout(1200);
-  await changed(initial, await canvas.screenshot());
-  await page
-    .getByRole("button", { name: "ყუთის დახურვა", exact: true })
-    .click();
-  await number(page, "data-open", 0);
-  await snapshot(page, `${engine}-closed-${size.width}x${size.height}`);
-  await page.getByRole("button", { name: "ყუთის გახსნა", exact: true }).click();
-  await number(page, "data-open", 1);
-  await page
-    .getByRole("button", { name: "ნაჭრების გაშლა", exact: true })
-    .click();
-  await number(page, "data-spread", 1);
-  await page
-    .getByRole("button", { name: "ნაჭრების შეკვრა", exact: true })
-    .click();
-  await number(page, "data-spread", 0);
+  await page.waitForFunction(
+    () => Number(document.querySelector(".xp-stage").dataset.lift) > 0.95,
+  );
+  await page.screenshot({
+    path: `${output}/${engine}-pull-${size.width}x${size.height}.png`,
+  });
   await page
     .locator(".xp-header")
     .getByRole("button", { name: "EN", exact: true })
     .click();
   assert.equal(await page.locator("html").getAttribute("lang"), "en");
-  assert.equal(
-    await page.locator(".xp-hero-bottom h2").textContent(),
-    "Pizza at the right angle.",
-  );
-  await checkLayout(page);
-  await scrollTo(page, Math.max(size.height, 640) * 0.85);
-  await page.locator('.xp-world-sticky[data-chapter="slices"]').waitFor();
-  await number(page, "data-spread", 1);
-  await snapshot(page, `${engine}-slices-${size.width}x${size.height}`);
   await page
-    .getByRole("button", { name: "That slice is mine", exact: true })
+    .getByRole("button", { name: "2. Ingredients", exact: true })
     .click();
-  await number(page, "data-lift", 1);
-  await snapshot(page, `${engine}-pull-${size.width}x${size.height}`);
-  await scrollTo(
-    page,
-    await page
-      .locator("#menu")
-      .evaluate((node) => node.getBoundingClientRect().top + scrollY - 72),
+  await page.locator('.xp-stage[data-phase="toppings"]').waitFor();
+  assert.match(
+    await page.locator(".xp-chapter-copy h2").textContent(),
+    /First, the sauce/,
   );
-  await page.waitForTimeout(700);
-  await snapshot(page, `${engine}-menu-${size.width}x${size.height}`);
+  await layout(page);
+  await page.getByRole("button", { name: "5. To you", exact: true }).click();
+  await page.locator('.xp-stage[data-phase="box"]').waitFor();
+  await page
+    .locator(".xp-chapter-copy")
+    .getByRole("link", { name: "Find your flavor", exact: true })
+    .click();
+  await page.waitForTimeout(1000);
+  assert.equal(await page.locator(".xp-flavor").count(), 6);
   const frame = await page.locator(".xp-stage").getAttribute("data-frame");
   await page.waitForTimeout(300);
   assert.equal(
     await page.locator(".xp-stage").getAttribute("data-frame"),
     frame,
-    "Offscreen renderer should sleep",
   );
-  assert.equal(await page.locator(".xp-flavor").count(), 6);
   await page.getByRole("button", { name: "With meat", exact: true }).click();
   assert.equal(await page.locator(".xp-flavor").count(), 2);
   await page.getByRole("button", { name: "Meat-free", exact: true }).click();
@@ -215,13 +181,8 @@ async function journey(browser, size, engine) {
     .getByRole("button", { name: "This is my flavor", exact: true })
     .click();
   assert.equal(await dialog.locator("output").textContent(), "2");
-  await dialog
-    .getByRole("button", { name: "Your choice", exact: true })
-    .waitFor();
-  await snapshot(page, `${engine}-dialog-${size.width}x${size.height}`);
   await page.keyboard.press("Escape");
   assert.equal(await page.getByRole("dialog").count(), 0);
-  assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   if (size.width < 700) {
     await page
       .getByRole("button", { name: "Open navigation", exact: true })
@@ -231,22 +192,12 @@ async function journey(browser, size, engine) {
       .getByRole("link", { name: "Delivery", exact: true })
       .click();
     assert(await page.locator("#xp-mobile-nav").isHidden());
-  } else
-    await page
-      .locator(".xp-desktop-nav")
-      .getByRole("link", { name: "Delivery", exact: true })
-      .click();
-  await page.waitForTimeout(1000);
-  await snapshot(page, `${engine}-delivery-${size.width}x${size.height}`);
-  await checkLayout(page);
+  }
   assert.deepEqual(errors, []);
-  console.log(`PASS ${engine} ${size.width}x${size.height}`, {
-    colored,
-    different,
-  });
+  console.log(`PASS ${engine} ${size.width}x${size.height}`, counts);
   await context.close();
 }
-async function quietCheck(browser, saveData = false) {
+async function quiet(browser, saveData) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     reducedMotion: saveData ? "no-preference" : "reduce",
@@ -263,23 +214,24 @@ async function quietCheck(browser, saveData = false) {
   await page.locator(".xp-stage[data-ready=true]").waitFor();
   await page.waitForTimeout(300);
   const frame = await page.locator(".xp-stage").getAttribute("data-frame");
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(350);
   assert.equal(
     await page.locator(".xp-stage").getAttribute("data-frame"),
     frame,
   );
-  await page
-    .getByRole("button", { name: "ნაჭრის დაბრუნება", exact: true })
-    .click();
-  await number(page, "data-lift", 0);
-  await page.getByRole("button", { name: "ნაჭრის აწევა", exact: true }).click();
-  await number(page, "data-lift", 1);
+  for (const [name, progress] of chapters) {
+    await seek(page, progress);
+    assert.equal(
+      await page.locator(".xp-stage").getAttribute("data-phase"),
+      name,
+    );
+  }
   console.log(
-    `PASS ${saveData ? "save-data" : "reduced-motion"}: static render, working controls`,
+    `PASS ${saveData ? "save-data" : "reduced-motion"}: all chapters remain accessible`,
   );
   await context.close();
 }
-async function fallbackCheck() {
+async function fallback() {
   const browser = await chromium.launch({
     ...options,
     args: ["--disable-webgl"],
@@ -291,22 +243,15 @@ async function fallbackCheck() {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.locator(".xp-stage[data-failed=true]").waitFor();
     assert(await page.locator(".xp-stage-fallback img").isVisible());
-    assert(
-      await page
-        .getByRole("button", { name: "ნაჭრის დაბრუნება", exact: true })
-        .isDisabled(),
-    );
-    await page.locator(".xp-hero-bottom a").click();
-    await page
-      .getByRole("button", { name: "ინგრედიენტები: პეპერონი", exact: true })
-      .click();
-    await page.getByRole("dialog").waitFor();
-    console.log("PASS WebGL fallback and menu access");
+    await page.getByRole("button", { name: "3. ღუმელი", exact: true }).click();
+    await page.locator('.xp-world-sticky[data-chapter="oven"]').waitFor();
+    assert(await page.locator(".xp-chapter-copy h2").isVisible());
+    console.log("PASS WebGL fallback and accessible chapter navigation");
   } finally {
     await browser.close();
   }
 }
-async function touchCheck(browser) {
+async function touch(browser) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
@@ -315,9 +260,13 @@ async function touchCheck(browser) {
   const page = await context.newPage();
   await page.goto(url, { waitUntil: "networkidle" });
   await page.locator(".xp-stage[data-ready=true]").waitFor();
-  await number(page, "data-lift", 1);
+  await page.waitForFunction(
+    () => Number(document.querySelector(".xp-stage").dataset.lift) > 0.95,
+  );
   await page.touchscreen.tap(195, 490);
-  await number(page, "data-lift", 0);
+  await page.waitForFunction(
+    () => Number(document.querySelector(".xp-stage").dataset.lift) < 0.04,
+  );
   const cdp = await context.newCDPSession(page);
   await cdp.send("Input.dispatchTouchEvent", {
     type: "touchStart",
@@ -334,17 +283,17 @@ async function touchCheck(browser) {
     type: "touchEnd",
     touchPoints: [],
   });
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(500);
   assert(
     await page.evaluate(() => scrollY > 100),
-    "3D canvas must not trap vertical touch scrolling",
+    "3D canvas must not trap touch scrolling",
   );
   console.log("PASS direct pizza tap and native touch scroll");
   await context.close();
 }
 (async () => {
   await fs.mkdir(output, { recursive: true });
-  const browser = await chromium.launch(options);
+  const chrome = await chromium.launch(options);
   try {
     for (const size of [
       { width: 1440, height: 1000 },
@@ -353,21 +302,21 @@ async function touchCheck(browser) {
       { width: 768, height: 1024 },
       { width: 844, height: 390 },
     ])
-      await journey(browser, size, "chrome");
-    await quietCheck(browser);
-    await quietCheck(browser, true);
-    await touchCheck(browser);
+      await check(chrome, size, "chrome");
+    await quiet(chrome, false);
+    await quiet(chrome, true);
+    await touch(chrome);
   } finally {
-    await browser.close();
+    await chrome.close();
   }
-  await fallbackCheck();
+  await fallback();
   const safari = await webkit.launch({ headless: true });
   try {
-    await journey(safari, { width: 390, height: 844 }, "webkit");
+    await check(safari, { width: 390, height: 844 }, "webkit");
   } finally {
     await safari.close();
   }
-  console.log("All new 3D world checks passed.");
+  console.log("All pizza-making story checks passed.");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

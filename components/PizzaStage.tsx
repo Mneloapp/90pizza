@@ -5,6 +5,8 @@ import type { MotionValue } from "framer-motion";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { buildBox, buildCheese, buildPizza } from "./pizza-model";
+import { buildPreparation, buildOven } from "./pizza-preparation";
+import { storyAt } from "./pizza-story";
 
 export type StageState = {
   open: boolean;
@@ -113,6 +115,10 @@ export default function PizzaStage({
       const food = new THREE.Group();
       food.position.y = 0.015;
       world.add(food);
+      const preparation = buildPreparation({ keep }, () => request());
+      food.add(preparation.group);
+      const oven = buildOven({ keep });
+      world.add(oven.group);
       const cheese = buildCheese({ keep });
       food.add(cheese.group);
       const floor = new THREE.Mesh(
@@ -137,7 +143,7 @@ export default function PizzaStage({
       const raycaster = new THREE.Raycaster(),
         hitPoint = new THREE.Vector2();
       let touchStart: { x: number; y: number } | null = null;
-      const look = new THREE.Vector3(0, 1, -0.45);
+      const look = new THREE.Vector3(0, 0.4, -0.3);
       const smooth = THREE.MathUtils.smoothstep;
       function render(time: number) {
         frame = 0;
@@ -155,15 +161,16 @@ export default function PizzaStage({
         }
         last = time;
         const raw = progress.get();
-        const targetChapter = smooth(raw, 0.18, 0.65);
+        const step = storyAt(raw);
+        const { index, local } = step;
+        const targetChapter = index === 0 ? 0 : 1;
         chapter = quiet
           ? targetChapter
           : THREE.MathUtils.damp(chapter, targetChapter, 6, dt);
-        const openTarget = current.open || chapter > 0.2 ? 1 : 0;
-        const liftTarget =
-          openTarget && (quiet || opening > 0.8) && current.lift ? 1 : 0;
+        const openTarget = index === 5 ? 1 - smooth(local, 0.45, 0.98) : 1;
+        const liftTarget = (index === 0 || index === 4) && current.lift ? 1 : 0;
         const spreadTarget =
-          openTarget && current.spread && !liftTarget ? 1 : 0;
+          index === 4 && !current.lift ? smooth(local, 0.02, 0.35) : 0;
         const damp = (a: number, b: number) =>
           quiet ? b : THREE.MathUtils.damp(a, b, 5, dt);
         opening = damp(opening, openTarget);
@@ -171,22 +178,56 @@ export default function PizzaStage({
         spreading = damp(spreading, spreadTarget);
         rotation = damp(
           rotation,
-          -0.32 + (current.turn * Math.PI) / 2 + chapter * 0.12,
+          index === 3 ? -0.1 : -0.32 + (current.turn * Math.PI) / 2,
         );
         pointer.lerp(quiet ? center : pointerTarget, 0.07);
         world.rotation.y = rotation + pointer.x * 0.13;
         world.rotation.x = pointer.y * 0.035;
         world.rotation.z = quiet ? 0 : Math.sin(time * 0.00055) * 0.012;
-        const mobile = width < 700;
-        world.position.x = mobile ? 0 : chapter * 1.7;
-        world.scale.setScalar(1.04 + chapter * 0.14);
-        world.position.y = -0.1 + (quiet ? 0 : Math.sin(time * 0.0008) * 0.035);
+        const mobile = window.innerWidth < 700;
+        world.position.x = mobile ? (index === 0 ? 0.14 : 0) : chapter * 1.65;
+        const sizeTarget =
+          index === 0 ? 1.42 : index === 3 ? 1.06 : index === 5 ? 1.06 : 1.36;
+        world.scale.setScalar(damp(world.scale.x, sizeTarget));
+        world.position.y =
+          (index === 1 || index === 2 ? 0.2 : -0.1) +
+          (quiet ? 0 : Math.sin(time * 0.0008) * 0.025);
         box.hinge.rotation.x = -opening * 2.05;
-        box.group.position.y = -chapter * 1.05;
-        box.group.scale.setScalar(Math.max(0.001, 1 - chapter));
-        box.group.visible = chapter < 0.995;
-        food.position.y = 0.015 + chapter * 0.15;
+        box.group.position.y = -0.3 * (1 - smooth(local, 0, 0.35));
+        box.group.scale.setScalar(
+          index === 5 ? Math.max(0.001, smooth(local, 0, 0.3)) : 0.001,
+        );
+        box.group.visible = index === 5;
+        food.position.y =
+          index === 5 ? 0.015 + 0.35 * (1 - smooth(local, 0, 0.4)) : 0.015;
+        const entering = smooth(local, 0.05, 0.4),
+          exiting = smooth(local, 0.66, 0.98);
+        food.position.z = index === 3 ? -3.0 * entering * (1 - exiting) : 0;
+        oven.group.visible = index === 3;
+        oven.group.scale.setScalar(
+          index === 3 ? 0.9 + 0.1 * smooth(local, 0, 0.12) : 0.001,
+        );
+        oven.light.intensity =
+          index === 3 ? 8 + (quiet ? 0 : Math.sin(time * 0.002) * 0.8) : 0;
+        const preparing =
+          index === 1 || index === 2 || (index === 3 && local < 0.56);
+        preparation.group.visible = preparing;
+        if (preparing)
+          preparation.update(
+            index === 1 ? local : 1,
+            index === 1 ? 0 : index === 2 ? local : 1,
+            time,
+            quiet,
+          );
+        const ovenCamera = index === 3 ? 1 : 0;
+        const distance = camera.aspect < 1 ? 1.25 / camera.aspect : 1.08;
+        camera.position
+          .set(4.2, THREE.MathUtils.lerp(7.8, 4.3, ovenCamera), 8.6)
+          .multiplyScalar(distance);
+        look.set(0, index === 5 ? 1 : 0.35, index === 3 ? -1.1 : -0.15);
+        camera.lookAt(look);
         if (pizza) {
+          pizza.group.visible = !preparing;
           pizza.slices.forEach((slice, index) => {
             const home = slice.userData.home as THREE.Vector3;
             slice.position.copy(home).multiplyScalar(1 + spreading * 0.13);
@@ -201,12 +242,15 @@ export default function PizzaStage({
             }
           });
           cheese.update(pizza.slices[6], lifting);
+          cheese.group.visible = cheese.group.visible && !preparing;
         }
         renderer.render(scene, camera);
         element.dataset.frame = String(Math.round(time));
         element.dataset.lift = lifting.toFixed(2);
         element.dataset.open = opening.toFixed(2);
         element.dataset.spread = spreading.toFixed(2);
+        element.dataset.phase = step.id;
+        element.dataset.local = local.toFixed(3);
         if (loaded && element.dataset.ready !== "true") {
           element.dataset.ready = "true";
           setReady(true);
@@ -286,12 +330,7 @@ export default function PizzaStage({
           (-(event.clientY - bounds.top) / bounds.height) * 2 + 1,
         );
         raycaster.setFromCamera(hitPoint, camera);
-        if (
-          raycaster.intersectObject(
-            inputs.current.state.open ? pizza.group : box.group,
-            true,
-          ).length
-        )
+        if (raycaster.intersectObject(pizza.group, true).length)
           inputs.current.onInteract();
       };
       cancel = () => {

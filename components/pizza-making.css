@@ -1,0 +1,487 @@
+.xp-journey {
+  height: 620svh;
+  min-height: 3360px;
+  background: #111;
+}
+.xp-journey .xp-world-sticky {
+  background: #111;
+  color: #fff;
+}
+.xp-journey .xp-world-sticky[data-chapter="dough"] {
+  background: #eeedeb;
+  color: #111;
+}
+.xp-journey .xp-world-sticky[data-chapter="toppings"],
+.xp-journey .xp-world-sticky[data-chapter="box"] {
+  background: #e01010;
+  color: #fff;
+}
+.xp-journey .xp-wordmark {
+  top: 105px;
+  opacity: 0;
+  transform: translateY(-20px);
+}
+.xp-journey [data-chapter="hero"] .xp-wordmark {
+  opacity: 1;
+  transform: none;
+}
+.xp-journey .xp-wordmark h1 {
+  font-size: 224px;
+}
+.xp-journey .xp-stage {
+  inset: 23% 0 12%;
+}
+.xp-journey .xp-opening {
+  position: absolute;
+  z-index: 3;
+  inset: auto 48px 110px;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 30px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-16px);
+  transition:
+    opacity 0.3s,
+    transform 0.4s;
+}
+.xp-journey [data-chapter="hero"] .xp-opening {
+  opacity: 1;
+  transform: none;
+}
+.xp-opening h2 {
+  white-space: pre-line;
+  font-size: 44px;
+  line-height: 1.18;
+  margin: 14px 0;
+}
+.xp-opening p {
+  color: #bbb;
+  font-size: 13px;
+  max-width: 330px;
+  line-height: 1.7;
+}
+.xp-opening button {
+  pointer-events: auto;
+}
+.xp-opening[inert] button {
+  pointer-events: none;
+}
+.xp-journey .xp-scene-controls {
+  top: auto;
+  bottom: 200px;
+  right: 48px;
+  flex-direction: row;
+}
+.xp-journey .xp-scene-controls:empty {
+  display: none;
+}
+.xp-journey [data-chapter="dough"] .xp-scene-controls {
+  border-color: #1113;
+  background: #fff8;
+}
+.xp-chapter-copy {
+  position: absolute;
+  z-index: 3;
+  top: 26%;
+  left: 48px;
+  max-width: 450px;
+  width: 35%;
+  pointer-events: none;
+}
+.xp-chapter-copy h2 {
+  white-space: pre-line;
+  font-size: 47px;
+  line-height: 1.22;
+  margin: 24px 0;
+}
+.xp-chapter-copy p {
+  max-width: 345px;
+  font-size: 15px;
+  line-height: 1.9;
+  opacity: 0.75;
+}
+.xp-process-detail {
+  display: block;
+  font-size: 10px;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid currentColor;
+  max-width: 320px;
+  opacity: 0.65;
+}
+.xp-chapter-copy .xp-button {
+  pointer-events: auto;
+  margin-top: 28px;
+}
+.xp-recipe-mark {
+  position: absolute;
+  bottom: 110px;
+  left: 48px;
+  font-size: 170px;
+  font-family: Arial, sans-serif;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0.08;
+}
+.xp-journey [data-chapter="hero"] .xp-recipe-mark {
+  display: none;
+}
+.xp-making-bottom {
+  position: absolute;
+  z-index: 5;
+  inset: auto 48px 16px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  border-top: 1px solid #ffffff3b;
+  padding-top: 15px;
+}
+.xp-chapters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 24px;
+  flex: 1;
+}
+.xp-chapters button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  text-align: left;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+.xp-chapters button > span:first-child {
+  font-size: 10px;
+}
+.xp-chapters button[aria-current="step"] {
+  opacity: 1;
+  font-weight: 700;
+}
+.xp-chapters button[aria-current="step"] > span:first-child {
+  color: #ff7162;
+}
+.xp-journey [data-chapter="dough"] .xp-making-bottom {
+  border-color: #1113;
+}
+.xp-journey
+  [data-chapter="dough"]
+  .xp-chapters
+  button[aria-current="step"]
+  > span:first-child {
+  color: #e01010;
+}
+.xp-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #e01010;
+  transform-origin: left;
+  z-index: 6;
+}
+.xp-journey [data-chapter="toppings"] .xp-progress,
+.xp-journey [data-chapter="box"] .xp-progress {
+  background: #fff;
+}
+.xp-making-anchor {
+  position: absolute;
+  left: 0;
+}
+@media (min-width: 1700px) {
+  .xp-journey .xp-wordmark h1 {
+    font-size: 280px;
+  }
+  .xp-chapter-copy h2 {
+    font-size: 56px;
+  }
+}
+@media (max-width: 1100px) {
+  .xp-journey .xp-wordmark h1 {
+    font-size: 190px;
+  }
+  .xp-journey .xp-opening {
+    inset-inline: 28px;
+  }
+  .xp-opening h2 {
+    font-size: 37px;
+  }
+  .xp-chapter-copy {
+    left: 28px;
+    max-width: 340px;
+  }
+  .xp-chapter-copy h2 {
+    font-size: 36px;
+  }
+  .xp-chapter-copy p {
+    font-size: 13px;
+  }
+  .xp-making-bottom {
+    inset-inline: 28px;
+    gap: 15px;
+  }
+  .xp-chapters {
+    gap: 12px;
+  }
+  .xp-chapters button {
+    gap: 6px;
+    font-size: 10px;
+  }
+  .xp-journey .xp-scene-controls {
+    right: 28px;
+  }
+  .xp-recipe-mark {
+    left: 28px;
+    font-size: 130px;
+  }
+}
+@media (max-width: 700px) {
+  .xp-journey {
+    height: 620svh;
+    min-height: 3360px;
+  }
+  .xp-journey .xp-wordmark {
+    top: 102px;
+  }
+  .xp-journey .xp-wordmark h1 {
+    font-size: 96px;
+  }
+  .xp-journey .xp-stage {
+    inset: 30% 0 25%;
+  }
+  .xp-journey [data-chapter="hero"] .xp-stage {
+    inset: 25% 0 26%;
+  }
+  .xp-journey [data-chapter="dough"] .xp-stage,
+  .xp-journey [data-chapter="toppings"] .xp-stage,
+  .xp-journey [data-chapter="oven"] .xp-stage {
+    top: 34%;
+    bottom: 13%;
+  }
+  .xp-journey [data-chapter="box"] .xp-stage,
+  .xp-journey [data-chapter="slices"] .xp-stage {
+    top: 31%;
+    bottom: 22%;
+  }
+  .xp-journey .xp-opening {
+    inset: auto 20px 96px;
+    display: block;
+  }
+  .xp-opening h2 {
+    font-size: 30px;
+    margin: 10px 0;
+  }
+  .xp-opening p {
+    font-size: 11px;
+    max-width: 250px;
+  }
+  .xp-opening > .xp-button {
+    position: absolute;
+    right: 0;
+    bottom: -45px;
+    min-height: 37px;
+    padding: 9px 12px;
+    font-size: 10px;
+    gap: 10px;
+  }
+  .xp-chapter-copy {
+    top: 98px;
+    bottom: 53px;
+    left: 20px;
+    right: 20px;
+    width: auto;
+    max-width: none;
+  }
+  .xp-chapter-copy h2 {
+    font-size: 32px;
+    margin: 13px 0;
+    line-height: 1.2;
+  }
+  .xp-chapter-copy p {
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 290px;
+  }
+  .xp-chapter-copy .xp-kicker {
+    font-size: 9px;
+  }
+  .xp-process-detail {
+    display: none;
+  }
+  .xp-journey .xp-scene-controls {
+    left: 20px;
+    right: auto;
+    top: auto;
+    bottom: 53px;
+  }
+  .xp-scene-controls .xp-icon {
+    height: 32px;
+    width: 32px;
+  }
+  .xp-making-bottom {
+    bottom: 5px;
+    inset-inline: 20px;
+    padding-top: 3px;
+    gap: 5px;
+  }
+  .xp-chapters {
+    gap: 0;
+  }
+  .xp-chapters button {
+    padding: 10px 4px 10px 0;
+    display: block;
+  }
+  .xp-chapters button > span:first-child {
+    font-size: 11px;
+  }
+  .xp-chapters button > span:last-child {
+    display: none;
+  }
+  .xp-next-step {
+    width: 30px;
+    height: 30px;
+  }
+  .xp-recipe-mark {
+    font-size: 130px;
+    left: 20px;
+    bottom: 128px;
+  }
+  .xp-chapter-copy .xp-button {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    min-height: 38px;
+    padding: 9px 12px;
+    font-size: 10px;
+    gap: 8px;
+    margin: 0;
+  }
+}
+@media (max-width: 374px) {
+  .xp-journey .xp-wordmark h1 {
+    font-size: 82px;
+  }
+  .xp-opening h2 {
+    font-size: 26px;
+  }
+  .xp-chapter-copy h2 {
+    font-size: 27px;
+  }
+}
+@media (max-height: 650px) and (max-width: 700px) {
+  .xp-journey .xp-wordmark {
+    top: 82px;
+  }
+  .xp-journey .xp-wordmark h1 {
+    font-size: 82px;
+  }
+  .xp-journey [data-chapter="hero"] .xp-stage {
+    top: 25%;
+    bottom: 28%;
+  }
+  .xp-opening h2 {
+    font-size: 24px;
+  }
+  .xp-opening p {
+    font-size: 10px;
+  }
+  .xp-opening .xp-kicker {
+    display: none;
+  }
+  .xp-chapter-copy {
+    top: 88px;
+  }
+  .xp-chapter-copy h2 {
+    font-size: 25px;
+    margin: 9px 0;
+  }
+  .xp-chapter-copy p {
+    font-size: 11px;
+    max-width: 270px;
+  }
+  .xp-journey [data-chapter="slices"] .xp-stage,
+  .xp-journey [data-chapter="box"] .xp-stage {
+    top: 35%;
+    bottom: 17%;
+  }
+  .xp-journey [data-chapter="dough"] .xp-stage,
+  .xp-journey [data-chapter="toppings"] .xp-stage,
+  .xp-journey [data-chapter="oven"] .xp-stage {
+    top: 39%;
+    bottom: 13%;
+  }
+}
+@media (max-height: 620px) and (min-width: 701px) {
+  .xp-journey {
+    min-height: 2400px;
+  }
+  .xp-journey .xp-wordmark {
+    top: 76px;
+    left: 28px;
+    right: auto;
+  }
+  .xp-journey .xp-wordmark h1 {
+    font-size: 108px;
+  }
+  .xp-journey .xp-stage {
+    inset: 16% 3% 12% 20%;
+  }
+  .xp-journey .xp-opening {
+    bottom: 76px;
+  }
+  .xp-opening h2 {
+    font-size: 25px;
+    margin: 10px 0;
+  }
+  .xp-opening p {
+    font-size: 10px;
+    max-width: 270px;
+  }
+  .xp-opening > .xp-button {
+    margin-right: 60px;
+    min-height: 38px;
+    font-size: 10px;
+    padding: 9px 12px;
+  }
+  .xp-chapter-copy {
+    top: 90px;
+  }
+  .xp-chapter-copy h2 {
+    font-size: 27px;
+    margin: 12px 0;
+  }
+  .xp-chapter-copy p {
+    font-size: 11px;
+  }
+  .xp-process-detail {
+    margin-top: 13px;
+    padding-top: 10px;
+    font-size: 8px;
+  }
+  .xp-chapter-copy .xp-button {
+    margin-top: 14px;
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 10px;
+  }
+  .xp-journey .xp-scene-controls {
+    bottom: auto;
+    top: 88px;
+    right: 20px;
+    flex-direction: column;
+  }
+  .xp-recipe-mark {
+    font-size: 80px;
+    bottom: 90px;
+  }
+  .xp-making-bottom {
+    bottom: 6px;
+    padding-top: 4px;
+  }
+}

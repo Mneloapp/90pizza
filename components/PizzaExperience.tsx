@@ -1,39 +1,28 @@
 "use client";
 
 import Image from "next/image";
-import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
-  motion,
-  useMotionValueEvent,
-  useReducedMotion,
-  useScroll,
-} from "framer-motion";
-import {
-  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   ArrowUp,
-  Box,
   Check,
   ChevronLeft,
   ChevronRight,
-  Grid3X3,
-  Hand,
   Leaf,
   Menu,
   Minus,
   Plus,
-  RotateCw,
   ShoppingBag,
   X,
 } from "lucide-react";
 import { flavors, type Language } from "./appetite-content";
 import { experienceCopy, type ExperienceCopy } from "./experience-content";
-import type { StageState } from "./PizzaStage";
+import MakingWorld from "./MakingWorld";
 import "./pizza-experience.css";
+import "./pizza-making.css";
 
-const PizzaStage = dynamic(() => import("./PizzaStage"), { ssr: false });
 type Selection = { index: number; quantity: number } | null;
 
 function FlavorDetails({
@@ -176,167 +165,6 @@ function FlavorDetails({
   );
 }
 
-function ProductWorld({
-  copy,
-  reduced,
-}: {
-  copy: ExperienceCopy;
-  reduced: boolean;
-}) {
-  const root = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: root,
-    offset: ["start start", "end end"],
-  });
-  const [story, setStory] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [state, setState] = useState<StageState>({
-    open: true,
-    lift: true,
-    spread: false,
-    turn: 0,
-  });
-  const chapter = useRef(false);
-  useMotionValueEvent(scrollYProgress, "change", (value) => {
-    const next = value > 0.3;
-    if (next !== chapter.current) {
-      chapter.current = next;
-      setStory(next);
-      setState((current) => ({
-        ...current,
-        open: true,
-        lift: !next,
-        spread: next,
-      }));
-    }
-  });
-  const lift = useCallback(() => {
-    setState((value) => ({
-      ...value,
-      open: true,
-      lift: !value.lift,
-      spread: false,
-    }));
-  }, []);
-  const controls = [
-    {
-      icon: Box,
-      label: state.open ? copy.shut : copy.open,
-      active: state.open,
-      action: () =>
-        setState((value) => ({
-          ...value,
-          open: !value.open,
-          lift: false,
-          spread: false,
-        })),
-      disabled: story,
-    },
-    {
-      icon: Hand,
-      label: state.lift ? copy.lower : copy.lift,
-      active: state.lift,
-      action: lift,
-    },
-    {
-      icon: Grid3X3,
-      label: state.spread ? copy.together : copy.separate,
-      active: state.spread,
-      action: () =>
-        setState((value) => ({
-          ...value,
-          open: true,
-          lift: false,
-          spread: !value.spread,
-        })),
-    },
-    {
-      icon: RotateCw,
-      label: copy.rotate,
-      active: false,
-      action: () => setState((value) => ({ ...value, turn: value.turn + 1 })),
-    },
-  ];
-  return (
-    <section
-      ref={root}
-      className="xp-world"
-      id="top"
-      aria-labelledby="xp-title"
-    >
-      <div className="xp-world-sticky" data-chapter={story ? "slices" : "box"}>
-        <div className="xp-wordmark" aria-hidden={story}>
-          <h1 id="xp-title">90pizza</h1>
-        </div>
-        <div className="xp-story-type" aria-hidden={!story}>
-          <span className="xp-kicker">02 / {copy.storyLabel}</span>
-          <div className="xp-story-number" aria-hidden="true">
-            09<span>↗</span>
-          </div>
-        </div>
-        <PizzaStage
-          state={state}
-          progress={scrollYProgress}
-          reduced={reduced}
-          label={copy.scene}
-          onReady={setReady}
-          onInteract={lift}
-        />
-        <div className="xp-hero-bottom" inert={story} aria-hidden={story}>
-          <div>
-            <span className="xp-kicker">01 / 30×30</span>
-            <h2>{copy.slogan}</h2>
-            <p>{copy.note}</p>
-          </div>
-          <a className="xp-button xp-button-white" href="#menu">
-            {copy.choose}
-            <ArrowUpRight size={22} />
-          </a>
-        </div>
-        <div className="xp-story-copy" inert={!story} aria-hidden={!story}>
-          <h2>{copy.storyTitle}</h2>
-          <p>{copy.storyNote}</p>
-          <button
-            className="xp-button xp-button-red"
-            disabled={!ready}
-            onClick={lift}
-          >
-            {state.lift ? copy.returnSlice : copy.takeSlice}
-            <ArrowUpRight size={22} />
-          </button>
-        </div>
-        <div className="xp-scene-controls" role="group" aria-label={copy.scene}>
-          {controls.map(({ icon: Icon, label, active, action, disabled }) => (
-            <button
-              key={Icon.displayName ?? label}
-              type="button"
-              className="xp-icon"
-              onClick={action}
-              disabled={!ready || disabled}
-              aria-label={label}
-              title={label}
-              aria-pressed={active}
-            >
-              <Icon size={20} />
-            </button>
-          ))}
-        </div>
-        <div className="xp-world-bottom">
-          <span>{story ? "02 / 02" : "01 / 02"}</span>
-          <a
-            href={story ? "#menu" : "#geometry"}
-            aria-label={story ? copy.menu : copy.idea}
-          >
-            {story ? copy.storyEnd : "90° / 30×30 / 09"}
-            <ArrowDown size={17} />
-          </a>
-        </div>
-      </div>
-      <span id="geometry" className="xp-geometry-anchor" aria-hidden="true" />
-    </section>
-  );
-}
-
 export default function PizzaExperience() {
   const [language, setLanguage] = useState<Language>("ge");
   const [navOpen, setNavOpen] = useState(false);
@@ -450,7 +278,7 @@ export default function PizzaExperience() {
         </nav>
       </header>
       <main>
-        <ProductWorld copy={copy} reduced={reduced} />
+        <MakingWorld copy={copy} reduced={reduced} />
         <div className="xp-specs">
           <div>
             <b>90°</b>
@@ -467,7 +295,7 @@ export default function PizzaExperience() {
         </div>
         <section id="menu" className="xp-menu" aria-labelledby="xp-menu-title">
           <motion.div className="xp-menu-heading" {...reveal}>
-            <span className="xp-kicker">03 / {copy.menu}</span>
+            <span className="xp-kicker">06 / {copy.menu}</span>
             <h2 id="xp-menu-title">{copy.menuTitle}</h2>
             <div>
               <p>{copy.menuNote}</p>
@@ -538,7 +366,7 @@ export default function PizzaExperience() {
           aria-labelledby="xp-delivery-title"
         >
           <motion.div {...reveal}>
-            <span className="xp-kicker">04 / {copy.delivery}</span>
+            <span className="xp-kicker">07 / {copy.delivery}</span>
             <h2 id="xp-delivery-title">{copy.deliveryTitle}</h2>
             <p>{copy.deliveryNote}</p>
           </motion.div>
