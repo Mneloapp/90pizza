@@ -208,7 +208,8 @@ button {
   flex: 1;
   position: relative;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
+  z-index: 1;
 }
 .hero-film {
   width: 100%;
@@ -216,6 +217,31 @@ button {
   position: absolute;
   inset: 0;
   background: #272727;
+}
+.film-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.film-surface {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.live-cheese {
+  position: absolute;
+  inset: 0 0 -48px;
+  z-index: 2;
+  pointer-events: none;
+}
+.live-cheese canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.live-cheese[data-failed="true"] {
+  visibility: hidden;
 }
 .film-poster,
 .hero-film video,
@@ -248,6 +274,7 @@ button {
   align-items: flex-start;
   justify-content: space-between;
   pointer-events: none;
+  z-index: 3;
 }
 .hero-wordmark h1 {
   font-size: 176px;
@@ -275,7 +302,19 @@ button {
   right: 48px;
   display: flex;
   gap: 8px;
-  z-index: 2;
+  z-index: 5;
+}
+.melt-button {
+  border-color: #fff0ce;
+  color: #fff0ce;
+}
+.melt-button[aria-pressed="true"] {
+  background: #fff0ce;
+  color: #111;
+}
+.melt-button[aria-pressed="true"]:hover {
+  background: #fff0ce;
+  color: #111;
 }
 .film-button {
   display: grid;
@@ -304,6 +343,7 @@ button {
   display: grid;
   place-items: center;
   background: #111111a6;
+  z-index: 5;
 }
 .hero-caption {
   flex-shrink: 0;
@@ -314,6 +354,8 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  position: relative;
+  z-index: 4;
 }
 .hero-caption h2 {
   font-size: 35px;
