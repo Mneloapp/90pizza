@@ -1,5 +1,5 @@
-import AppetitePage from "@/components/AppetitePage";
+import PizzaExperience from "@/components/PizzaExperience";
 
 export default function Home() {
-  return <AppetitePage />;
+  return <PizzaExperience />;
 }
