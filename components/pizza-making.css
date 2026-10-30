@@ -194,6 +194,15 @@
   position: absolute;
   left: 0;
 }
+.xp-dough-placeholder {
+  width: 180px;
+  height: 100px;
+  border-radius: 50%;
+  background: #e9ddc5;
+  box-shadow:
+    inset -12px -18px 22px #baa889,
+    0 22px 30px #0005;
+}
 @media (min-width: 1700px) {
   .xp-journey .xp-wordmark h1 {
     font-size: 280px;
@@ -484,4 +493,8 @@
     bottom: 6px;
     padding-top: 4px;
   }
+}
+
+.xp-journey [data-chapter="hero"] .xp-stage {
+  inset: 0;
 }

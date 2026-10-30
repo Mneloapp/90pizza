@@ -7,18 +7,21 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { buildBox, buildCheese, buildPizza } from "./pizza-model";
 import { buildPreparation, buildOven } from "./pizza-preparation";
 import { storyAt } from "./pizza-story";
+import { buildFlour } from "./pizza-flour";
 
 export type StageState = {
   open: boolean;
   lift: boolean;
   spread: boolean;
   turn: number;
+  pour: number;
 };
 type Props = {
   state: StageState;
   progress: MotionValue<number>;
   reduced: boolean;
   label: string;
+  fallbackDough: boolean;
   onReady: (ready: boolean) => void;
   onInteract: () => void;
 };
@@ -28,6 +31,7 @@ export default function PizzaStage({
   progress,
   reduced,
   label,
+  fallbackDough,
   onReady,
   onInteract,
 }: Props) {
@@ -117,6 +121,9 @@ export default function PizzaStage({
       world.add(food);
       const preparation = buildPreparation({ keep }, () => request());
       food.add(preparation.group);
+      const flour = buildFlour({ keep }, window.innerWidth < 700);
+      world.add(flour.group);
+      scene.add(flour.curtain);
       const oven = buildOven({ keep });
       world.add(oven.group);
       const cheese = buildCheese({ keep });
@@ -137,6 +144,8 @@ export default function PizzaStage({
         chapter = 0;
       let width = 1,
         height = 1;
+      let introElapsed = 0.65,
+        lastPour = 0;
       const pointer = new THREE.Vector2(),
         pointerTarget = new THREE.Vector2(),
         center = new THREE.Vector2();
@@ -163,12 +172,27 @@ export default function PizzaStage({
         const raw = progress.get();
         const step = storyAt(raw);
         const { index, local } = step;
+        if (current.pour !== lastPour) {
+          lastPour = current.pour;
+          introElapsed = 0.65;
+        }
+        if (index === 0)
+          introElapsed = quiet ? 6 : Math.min(6, introElapsed + dt);
+        else introElapsed = 6;
+        flour.update(
+          introElapsed,
+          index === 0,
+          quiet,
+          renderer.getPixelRatio(),
+        );
+        floor.visible = index !== 0;
+        const doughReveal = smooth(introElapsed, 2.2, 5.2);
         const targetChapter = index === 0 ? 0 : 1;
         chapter = quiet
           ? targetChapter
           : THREE.MathUtils.damp(chapter, targetChapter, 6, dt);
         const openTarget = index === 5 ? 1 - smooth(local, 0.45, 0.98) : 1;
-        const liftTarget = (index === 0 || index === 4) && current.lift ? 1 : 0;
+        const liftTarget = index === 4 && current.lift ? 1 : 0;
         const spreadTarget =
           index === 4 && !current.lift ? smooth(local, 0.02, 0.35) : 0;
         const damp = (a: number, b: number) =>
@@ -185,9 +209,14 @@ export default function PizzaStage({
         world.rotation.x = pointer.y * 0.035;
         world.rotation.z = quiet ? 0 : Math.sin(time * 0.00055) * 0.012;
         const mobile = window.innerWidth < 700;
-        world.position.x = mobile ? (index === 0 ? 0.14 : 0) : chapter * 1.65;
+        world.position.x =
+          index === 0 && !mobile && window.innerHeight < 620
+            ? 2
+            : mobile
+              ? 0
+              : chapter * 1.65;
         const sizeTarget =
-          index === 0 ? 1.42 : index === 3 ? 1.06 : index === 5 ? 1.06 : 1.36;
+          index === 0 ? 2.1 : index === 3 ? 1.06 : index === 5 ? 1.06 : 1.36;
         world.scale.setScalar(damp(world.scale.x, sizeTarget));
         world.position.y =
           (index === 1 || index === 2 ? 0.2 : -0.1) +
@@ -209,18 +238,23 @@ export default function PizzaStage({
         );
         oven.light.intensity =
           index === 3 ? 8 + (quiet ? 0 : Math.sin(time * 0.002) * 0.8) : 0;
-        const preparing =
-          index === 1 || index === 2 || (index === 3 && local < 0.56);
+        const preparing = index < 3 || (index === 3 && local < 0.56);
         preparation.group.visible = preparing;
+        preparation.group.scale.setScalar(
+          index === 0 ? Math.max(0.001, doughReveal) : 1,
+        );
         if (preparing)
           preparation.update(
-            index === 1 ? local : 1,
-            index === 1 ? 0 : index === 2 ? local : 1,
+            index === 0 ? 0 : index === 1 ? local : 1,
+            index < 2 ? 0 : index === 2 ? local : 1,
             time,
             quiet,
           );
         const ovenCamera = index === 3 ? 1 : 0;
-        const distance = camera.aspect < 1 ? 1.25 / camera.aspect : 1.08;
+        const distance =
+          camera.aspect < 1
+            ? (index === 0 ? 0.85 : 1.25) / camera.aspect
+            : 1.08;
         camera.position
           .set(4.2, THREE.MathUtils.lerp(7.8, 4.3, ovenCamera), 8.6)
           .multiplyScalar(distance);
@@ -251,10 +285,14 @@ export default function PizzaStage({
         element.dataset.spread = spreading.toFixed(2);
         element.dataset.phase = step.id;
         element.dataset.local = local.toFixed(3);
-        if (loaded && element.dataset.ready !== "true") {
-          element.dataset.ready = "true";
-          setReady(true);
-          inputs.current.onReady(true);
+        element.dataset.intro = introElapsed.toFixed(2);
+        element.dataset.flour = String(flour.curtain.visible);
+        element.dataset.product = preparing ? "dough" : "pizza";
+        const canRender = loaded || preparing;
+        if (element.dataset.ready !== String(canRender)) {
+          element.dataset.ready = String(canRender);
+          setReady(canRender);
+          inputs.current.onReady(canRender);
         }
         if (!quiet) frame = requestAnimationFrame(render);
       }
@@ -317,7 +355,7 @@ export default function PizzaStage({
         touchStart = { x: event.clientX, y: event.clientY };
       };
       up = (event) => {
-        if (!touchStart || !pizza) return;
+        if (!touchStart || !pizza || !pizza.group.visible) return;
         const distance = Math.hypot(
           event.clientX - touchStart.x,
           event.clientY - touchStart.y,
@@ -390,7 +428,15 @@ export default function PizzaStage({
       <canvas ref={canvas} aria-label={label} role="img" />
       {(!ready || failed) && (
         <div className="xp-stage-fallback">
-          <img src="/images/square-drop/pepperoni.webp" alt={label} />
+          {fallbackDough ? (
+            <div
+              className="xp-dough-placeholder"
+              role="img"
+              aria-label={label}
+            />
+          ) : (
+            <img src="/images/square-drop/pepperoni.webp" alt={label} />
+          )}
         </div>
       )}
     </div>

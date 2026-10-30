@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Hand,
+  RotateCcw,
   RotateCw,
 } from "lucide-react";
 import type { ExperienceCopy } from "./experience-content";
@@ -33,20 +34,27 @@ export default function MakingWorld({
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<StageState>({
     open: true,
-    lift: true,
+    lift: false,
     spread: false,
     turn: 0,
+    pour: 0,
   });
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     const next = storyAt(progress).index;
     if (next !== currentChapter.current) {
       currentChapter.current = next;
       setChapter(next);
-      setState({ open: true, lift: next === 0, spread: false, turn: 0 });
+      setState((value) => ({
+        ...value,
+        open: true,
+        lift: false,
+        spread: false,
+        turn: 0,
+      }));
     }
   });
   const lift = useCallback(() => {
-    if (currentChapter.current !== 0 && currentChapter.current !== 4) return;
+    if (currentChapter.current !== 4) return;
     setState((value) => ({ ...value, lift: !value.lift }));
   }, []);
   function go(index: number) {
@@ -79,6 +87,7 @@ export default function MakingWorld({
           progress={scrollYProgress}
           reduced={reduced}
           label={copy.making.chapters}
+          fallbackDough={chapter < 3}
           onReady={setReady}
           onInteract={lift}
         />
@@ -130,7 +139,20 @@ export default function MakingWorld({
           </motion.div>
         )}
         <div className="xp-scene-controls" role="group" aria-label={copy.scene}>
-          {(chapter === 0 || chapter === 4) && (
+          {chapter === 0 && (
+            <button
+              className="xp-icon"
+              disabled={!ready || reduced}
+              onClick={() =>
+                setState((value) => ({ ...value, pour: value.pour + 1 }))
+              }
+              aria-label={copy.making.replay}
+              title={copy.making.replay}
+            >
+              <RotateCcw size={19} />
+            </button>
+          )}
+          {chapter === 4 && (
             <button
               className="xp-icon"
               disabled={!ready}
@@ -142,7 +164,7 @@ export default function MakingWorld({
               <Hand size={19} />
             </button>
           )}
-          {chapter !== 3 && (
+          {chapter !== 0 && chapter !== 3 && (
             <button
               className="xp-icon"
               disabled={!ready}
@@ -176,11 +198,9 @@ export default function MakingWorld({
             onClick={() =>
               chapter < 5
                 ? go(chapter + 1)
-                : document
-                    .getElementById("menu")
-                    ?.scrollIntoView({
-                      behavior: reduced ? "instant" : "smooth",
-                    })
+                : document.getElementById("menu")?.scrollIntoView({
+                    behavior: reduced ? "instant" : "smooth",
+                  })
             }
             aria-label={chapter < 5 ? copy.making.next : copy.menu}
             title={chapter < 5 ? copy.making.next : copy.menu}

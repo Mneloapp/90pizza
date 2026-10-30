@@ -33,9 +33,10 @@ export const experienceCopy = {
     returnSlice: "ნაჭრის დაბრუნება",
     storyEnd: "გაზიარება სურვილისამებრ.",
     making: {
-      title: "ერთი ნაჭრის\nმთელი ამბავი.",
-      note: "ცომიდან შენს კარამდე. პიცა სწორი კუთხით.",
-      begin: "ამბავი იწყება",
+      title: "ყველაფერი\nფქვილით იწყება.",
+      note: "ცოტა ფქვილი. დიდი ამბის დასაწყისი.",
+      begin: "მოვამზადოთ",
+      replay: "ფქვილის ხელახლა დაყრა",
       next: "შემდეგი ეტაპი",
       chapters: "პიცის მომზადების ეტაპები",
       stages: [
@@ -130,9 +131,10 @@ export const experienceCopy = {
     returnSlice: "Return the slice",
     storyEnd: "Sharing is optional.",
     making: {
-      title: "A whole story.\nIn one square.",
-      note: "From the dough to your door. Pizza at the right angle.",
-      begin: "Where it begins",
+      title: "It all begins\nwith flour.",
+      note: "A little flour. The start of something good.",
+      begin: "Let's make it",
+      replay: "Pour the flour again",
       next: "Next chapter",
       chapters: "The making of a pizza",
       stages: [

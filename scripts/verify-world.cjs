@@ -242,7 +242,7 @@ async function fallback() {
     });
     await page.goto(url, { waitUntil: "networkidle" });
     await page.locator(".xp-stage[data-failed=true]").waitFor();
-    assert(await page.locator(".xp-stage-fallback img").isVisible());
+    assert(await page.locator(".xp-dough-placeholder").isVisible());
     await page.getByRole("button", { name: "3. ღუმელი", exact: true }).click();
     await page.locator('.xp-world-sticky[data-chapter="oven"]').waitFor();
     assert(await page.locator(".xp-chapter-copy h2").isVisible());
@@ -260,6 +260,9 @@ async function touch(browser) {
   const page = await context.newPage();
   await page.goto(url, { waitUntil: "networkidle" });
   await page.locator(".xp-stage[data-ready=true]").waitFor();
+  await seek(page, 0.77);
+  await page.locator('.xp-stage[data-phase="slices"]').waitFor();
+  await page.touchscreen.tap(195, 490);
   await page.waitForFunction(
     () => Number(document.querySelector(".xp-stage").dataset.lift) > 0.95,
   );
@@ -285,7 +288,10 @@ async function touch(browser) {
   });
   await page.waitForTimeout(500);
   assert(
-    await page.evaluate(() => scrollY > 100),
+    await page.evaluate(() => {
+      const node = document.querySelector(".xp-world");
+      return scrollY > (node.offsetHeight - innerHeight) * 0.77 + 100;
+    }),
     "3D canvas must not trap touch scrolling",
   );
   console.log("PASS direct pizza tap and native touch scroll");
@@ -295,6 +301,9 @@ async function touch(browser) {
   await fs.mkdir(output, { recursive: true });
   const chrome = await chromium.launch(options);
   try {
+    const flourCheck = require("./verify-flour.cjs");
+    await flourCheck(chrome, url, output, 1440);
+    await flourCheck(chrome, url, output, 390);
     for (const size of [
       { width: 1440, height: 1000 },
       { width: 390, height: 844 },

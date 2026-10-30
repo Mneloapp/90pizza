@@ -12,8 +12,22 @@ export function buildPreparation({ keep }: Resources, onAsset: () => void) {
   const group = new THREE.Group();
   const geometry = keep(new THREE.SphereGeometry(1, 48, 24));
   const original = new Float32Array(geometry.attributes.position.array);
+  const grain = new Uint8Array(128 * 128);
+  for (let i = 0; i < grain.length; i++)
+    grain[i] = 110 + Math.floor(random(i) * 60);
+  const doughBump = keep(
+    new THREE.DataTexture(grain, 128, 128, THREE.RedFormat),
+  );
+  doughBump.wrapS = doughBump.wrapT = THREE.RepeatWrapping;
+  doughBump.repeat.set(3, 3);
+  doughBump.needsUpdate = true;
   const doughMaterial = keep(
-    new THREE.MeshStandardMaterial({ color: "#ead7b1", roughness: 0.97 }),
+    new THREE.MeshStandardMaterial({
+      color: "#e8d8b8",
+      roughness: 0.97,
+      bumpMap: doughBump,
+      bumpScale: 0.035,
+    }),
   );
   const dough = new THREE.Mesh(geometry, doughMaterial);
   dough.castShadow = true;
