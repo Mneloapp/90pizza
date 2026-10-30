@@ -1,0 +1,6 @@
+{
+  "asset": "/images/materials/dough-albedo.webp",
+  "method": "Built-in image_gen; compressed to 1024px WebP for the web",
+  "use": "Object-space albedo and micro-bump on the sculpted, animated Three.js dough mesh. Not a billboard or video.",
+  "prompt": "Use case: photorealistic-natural. Asset type: seamless physically based albedo texture for a REAL-TIME 3D raw pizza dough mesh, NOT a picture of a dough ball. Generate a square edge-to-edge orthographic macro scan of raw pizza dough SURFACE ONLY. No object silhouette, no background, no horizon, no perspective, no text, no logos. The entire image is the continuous material. Neutral pale ivory dough with extremely fine hydrated gluten grain, tiny subtle fermentation pores, faint soft stretched kneading creases, delicate scattered matte white flour powder. Natural artisanal Italian pizza dough, not bread crust, no baking, no brown spots, no large cracks. Subtle realistic variation, avoid coarse sponge texture, avoid glossy rubber, avoid smooth plastic. Very flat diffuse cross-polarized lighting, no baked shadows or directional highlights. Seamless tileable matching edges. Photorealistic high-resolution tactile food material for a premium close-up 3D product. Favor uniform pale ivory base and small-scale detail; flour dust should be fine irregular speckling, NOT large bright painted patches."
+}

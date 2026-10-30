@@ -498,3 +498,36 @@
 .xp-journey [data-chapter="hero"] .xp-stage {
   inset: 0;
 }
+
+.xp-journey [data-chapter="hero"] .xp-wordmark,
+.xp-journey [data-chapter="hero"] .xp-opening {
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s ease;
+}
+.xp-journey [data-chapter="hero"][data-intro-ready="false"] .xp-wordmark,
+.xp-journey [data-chapter="hero"][data-intro-ready="false"] .xp-opening {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.xp-journey [data-chapter="hero"][data-scene-ready="false"] .xp-wordmark {
+  opacity: 1;
+  transform: none;
+}
+.xp-journey [data-chapter="hero"] .xp-kicker {
+  color: #ff776b;
+}
+@media (min-width: 1101px) {
+  .xp-journey [data-chapter="hero"] .xp-wordmark h1 {
+    font-size: 192px;
+  }
+  .xp-journey [data-chapter="hero"] .xp-wordmark {
+    top: 98px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xp-journey [data-chapter="hero"] .xp-wordmark,
+  .xp-journey [data-chapter="hero"] .xp-opening {
+    transition: none;
+  }
+}

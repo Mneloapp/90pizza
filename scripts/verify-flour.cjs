@@ -9,6 +9,10 @@ module.exports = async function flourCheck(browser, url, output, width) {
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error" && /shader|WebGL|THREE/.test(message.text()))
+      errors.push(message.text());
+  });
   let releasePhoto;
   const photoGate = new Promise((resolve) => {
     releasePhoto = resolve;
@@ -32,19 +36,26 @@ module.exports = async function flourCheck(browser, url, output, width) {
   assert.equal(Math.round(bounds.width), width);
   assert.equal(Math.round(bounds.height), width > 700 ? 1000 : 844);
   const replay = page.getByRole("button", {
-    name: "ფქვილის ხელახლა დაყრა",
+    name: "დასაწყისის გამეორება",
     exact: true,
   });
   await replay.click();
   await page.waitForFunction(
-    () => +document.querySelector(".xp-stage").dataset.intro > 1.3,
+    () => +document.querySelector(".xp-stage").dataset.intro > 1.0,
   );
   assert.equal(await stage.getAttribute("data-flour"), "true");
+  assert.equal(await stage.getAttribute("data-burst"), "expand");
+  assert.equal(await page.locator(".xp-opening").getAttribute("inert"), "");
   const first = await page.screenshot({
-    path: `${output}/flour-falling-${width}.png`,
+    path: `${output}/flour-burst-${width}.png`,
   });
-  await page.waitForTimeout(450);
-  const second = await page.screenshot();
+  await page.waitForFunction(
+    () => +document.querySelector(".xp-stage").dataset.intro > 3.15,
+  );
+  assert.equal(await stage.getAttribute("data-burst"), "gather");
+  const second = await page.screenshot({
+    path: `${output}/flour-gather-${width}.png`,
+  });
   const a = await sharp(first)
     .ensureAlpha()
     .raw()
@@ -53,23 +64,29 @@ module.exports = async function flourCheck(browser, url, output, width) {
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  const sides = [0, 0];
-  for (let y = Math.floor(a.info.height * 0.28); y < a.info.height * 0.7; y++) {
+  const mass = [0, 0];
+  for (
+    let y = Math.floor(a.info.height * 0.32);
+    y < a.info.height * 0.73;
+    y++
+  ) {
     for (let x = 0; x < a.info.width; x++) {
-      if (x > width * 0.2 && x < width * 0.8) continue;
       const i = (y * width + x) * 4;
-      if (Math.abs(a.data[i] - b.data[i]) > 35) sides[x < width / 2 ? 0 : 1]++;
+      if (a.data[i] > 50) mass[0]++;
+      if (b.data[i] > 50) mass[1]++;
     }
   }
   assert(
-    sides.every((pixels) => pixels > 40),
-    `Flour must fall on both sides of the screen: ${sides}`,
+    mass[0] > 2500 && mass[1] < mass[0] * 0.85,
+    `The expanded powder must visibly gather into the dough: ${mass}`,
   );
   await page.waitForFunction(
     () => +document.querySelector(".xp-stage").dataset.intro >= 5.9,
   );
   assert.equal(await stage.getAttribute("data-flour"), "false");
   assert.equal(await stage.getAttribute("data-product"), "dough");
+  assert.equal(await stage.getAttribute("data-burst"), "settled");
+  assert.equal(await page.locator(".xp-opening").getAttribute("inert"), null);
   await page.screenshot({ path: `${output}/flour-settled-${width}.png` });
   await replay.click();
   await page.waitForFunction(
@@ -81,17 +98,15 @@ module.exports = async function flourCheck(browser, url, output, width) {
     .click();
   assert.match(
     await page.locator(".xp-opening h2").textContent(),
-    /It all begins/,
+    /Big flavor/,
   );
-  await page
-    .getByRole("button", { name: "Let's make it", exact: true })
-    .click();
+  await page.getByRole("button", { name: "1. Dough", exact: true }).click();
   await page.locator('.xp-stage[data-phase="dough"]').waitFor();
   assert.equal(await stage.getAttribute("data-flour"), "false");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   assert.deepEqual(errors, []);
   console.log(
-    `PASS flour ${width}: full-screen motion ${sides}, texture-independent opening, replay, skip and EN`,
+    `PASS burst ${width}: powder area ${mass}, texture-independent opening, replay, skip and EN`,
   );
   await context.close();
 };

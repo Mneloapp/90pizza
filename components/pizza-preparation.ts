@@ -8,27 +8,140 @@ const random = (n: number) => {
   return v - Math.floor(v);
 };
 
-export function buildPreparation({ keep }: Resources, onAsset: () => void) {
-  const group = new THREE.Group();
-  const geometry = keep(new THREE.SphereGeometry(1, 48, 24));
-  const original = new Float32Array(geometry.attributes.position.array);
-  const grain = new Uint8Array(128 * 128);
-  for (let i = 0; i < grain.length; i++)
-    grain[i] = 110 + Math.floor(random(i) * 60);
-  const doughBump = keep(
-    new THREE.DataTexture(grain, 128, 128, THREE.RedFormat),
-  );
-  doughBump.wrapS = doughBump.wrapT = THREE.RepeatWrapping;
-  doughBump.repeat.set(3, 3);
-  doughBump.needsUpdate = true;
-  const doughMaterial = keep(
-    new THREE.MeshStandardMaterial({
-      color: "#e8d8b8",
-      roughness: 0.97,
-      bumpMap: doughBump,
+function doughSurface({ keep }: Resources, onAsset: () => void) {
+  const size = 256;
+  const color = new Uint8Array(size * size * 4);
+  const height = new Uint8Array(size * size);
+  const hash = (x: number, y: number, period: number) => {
+    let n = (x % period) * 374761393 + (y % period) * 668265263;
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  };
+  function noise(u: number, v: number, period: number) {
+    const x = u * period,
+      y = v * period,
+      ix = Math.floor(x),
+      iy = Math.floor(y);
+    const fx = THREE.MathUtils.smoothstep(x - ix, 0, 1),
+      fy = THREE.MathUtils.smoothstep(y - iy, 0, 1);
+    return THREE.MathUtils.lerp(
+      THREE.MathUtils.lerp(hash(ix, iy, period), hash(ix + 1, iy, period), fx),
+      THREE.MathUtils.lerp(
+        hash(ix, iy + 1, period),
+        hash(ix + 1, iy + 1, period),
+        fx,
+      ),
+      fy,
+    );
+  }
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) {
+      const i = y * size + x,
+        u = x / size,
+        v = y / size;
+      const patches = noise(u, v, 8) * 0.65 + noise(u, v, 32) * 0.35;
+      const powder = smooth(patches, 0.42, 0.7);
+      const pore = random(i) > 0.975 ? 17 : 0;
+      const detail = (noise(u, v, 64) - 0.5) * 7 - pore * 0.15;
+      color.set(
+        [
+          235 + powder * 17 + detail,
+          222 + powder * 28 + detail,
+          200 + powder * 46 + detail,
+          255,
+        ],
+        i * 4,
+      );
+      height[i] =
+        100 +
+        noise(u, v, 16) * 28 +
+        noise(u, v, 64) * 35 +
+        random(i) * 14 -
+        pore;
+    }
+  const map = keep(new THREE.DataTexture(color, size, size));
+  map.colorSpace = THREE.SRGBColorSpace;
+  const bump = keep(new THREE.DataTexture(height, size, size, THREE.RedFormat));
+  for (const texture of [map, bump]) {
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
+    texture.anisotropy = 4;
+    texture.needsUpdate = true;
+  }
+  const material = keep(
+    new THREE.MeshPhysicalMaterial({
+      color: "#ffffff",
+      map,
+      bumpMap: bump,
       bumpScale: 0.035,
+      roughness: 0.96,
+      sheen: 0.12,
+      sheenRoughness: 0.9,
+      sheenColor: new THREE.Color("#fff6e5"),
+      transparent: true,
     }),
   );
+  // Object-space projection avoids pinching the flour texture at sphere UV poles.
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader =
+      `varying vec3 doughPosition; varying vec3 doughNormal;\n${shader.vertexShader}`.replace(
+        "#include <begin_vertex>",
+        "#include <begin_vertex>\ndoughPosition = position; doughNormal = normal;",
+      );
+    shader.fragmentShader =
+      `varying vec3 doughPosition; varying vec3 doughNormal;\n${shader.fragmentShader}`
+        .replace(
+          "#include <map_fragment>",
+          `
+        vec3 doughWeights = pow(abs(normalize(doughNormal)), vec3(4.0));
+        doughWeights /= dot(doughWeights, vec3(1.0));
+        vec3 doughUv = doughPosition * 0.85 + 0.5;
+        diffuseColor *= texture2D(map, doughUv.yz) * doughWeights.x
+          + texture2D(map, doughUv.xz) * doughWeights.y
+          + texture2D(map, doughUv.xy) * doughWeights.z;
+      `,
+        )
+        .replace(
+          "#include <normal_fragment_maps>",
+          `
+        float doughHeight = dot(vec3(texture2D(bumpMap, doughUv.yz).r, texture2D(bumpMap, doughUv.xz).r, texture2D(bumpMap, doughUv.xy).r), doughWeights);
+        normal = perturbNormalArb(-vViewPosition, normal, vec2(dFdx(doughHeight), dFdy(doughHeight)) * bumpScale, faceDirection);
+      `,
+        );
+  };
+  let active = true;
+  keep({
+    dispose: () => {
+      active = false;
+    },
+  });
+  const photo = keep(
+    new THREE.TextureLoader().load(
+      "/images/materials/dough-albedo.webp",
+      (loaded) => {
+        if (!active) return;
+        material.map = loaded;
+        material.bumpMap = loaded;
+        material.needsUpdate = true;
+        onAsset();
+      },
+      undefined,
+      () => {},
+    ),
+  );
+  photo.colorSpace = THREE.SRGBColorSpace;
+  photo.wrapS = photo.wrapT = THREE.RepeatWrapping;
+  photo.anisotropy = 4;
+  return material;
+}
+
+export function buildPreparation({ keep }: Resources, onAsset: () => void) {
+  const group = new THREE.Group();
+  const geometry = keep(new THREE.SphereGeometry(1, 96, 64));
+  const original = new Float32Array(geometry.attributes.position.array);
+  const doughMaterial = doughSurface({ keep }, onAsset);
   const dough = new THREE.Mesh(geometry, doughMaterial);
   dough.castShadow = true;
   dough.receiveShadow = true;
@@ -103,34 +216,63 @@ export function buildPreparation({ keep }: Resources, onAsset: () => void) {
   pepperonis.receiveShadow = true;
   group.add(pepperonis);
 
-  function update(form: number, topping: number, time: number, quiet: boolean) {
+  let lastShape = -1,
+    lastFormation = -1;
+  function update(
+    form: number,
+    topping: number,
+    time: number,
+    quiet: boolean,
+    formation = 1,
+  ) {
     const shape = smooth(form, 0.03, 0.82);
+    doughMaterial.opacity = formation;
+    doughMaterial.depthWrite = formation > 0.98;
+    dough.visible = formation > 0.001;
+    dough.castShadow = formation > 0.9;
     const positions = geometry.attributes.position;
-    for (let i = 0; i < positions.count; i++) {
-      const nx = original[i * 3],
-        ny = original[i * 3 + 1],
-        nz = original[i * 3 + 2];
-      positions.setXYZ(
-        i,
-        THREE.MathUtils.lerp(
-          nx * 0.75,
-          Math.sign(nx) * Math.abs(nx) ** 0.18 * 1.8,
-          shape,
-        ),
-        THREE.MathUtils.lerp(
-          ny * 0.38,
-          Math.sign(ny) * Math.abs(ny) ** 0.25 * 0.065,
-          shape,
-        ),
-        THREE.MathUtils.lerp(
-          nz * 0.75,
-          Math.sign(nz) * Math.abs(nz) ** 0.18 * 1.8,
-          shape,
-        ),
-      );
+    if (shape !== lastShape || formation !== lastFormation) {
+      for (let i = 0; i < positions.count; i++) {
+        const nx = original[i * 3],
+          ny = original[i * 3 + 1],
+          nz = original[i * 3 + 2];
+        const angle = Math.atan2(nz, nx);
+        const folds =
+          Math.exp(-(((ny + 0.55) / 0.28) ** 2)) *
+          Math.sin(angle * 11 + ny * 9) *
+          0.035;
+        const contour =
+          1 +
+          Math.sin(angle * 3 + ny * 2) * 0.035 +
+          Math.cos(angle * 5 - ny * 3) * 0.018 -
+          folds;
+        const knead = (1 - formation) * Math.sin(angle * 4 + ny * 5) * 0.11;
+        positions.setXYZ(
+          i,
+          THREE.MathUtils.lerp(
+            nx * 0.88 * (contour + knead),
+            Math.sign(nx) * Math.abs(nx) ** 0.18 * 1.8,
+            shape,
+          ),
+          THREE.MathUtils.lerp(
+            ny * (ny > 0 ? 0.5 : 0.36) +
+              Math.sin(angle * 3) * (1 - ny * ny) * 0.017,
+            Math.sign(ny) * Math.abs(ny) ** 0.25 * 0.065,
+            shape,
+          ),
+          THREE.MathUtils.lerp(
+            nz * 0.81 * (contour - knead * 0.5),
+            Math.sign(nz) * Math.abs(nz) ** 0.18 * 1.8,
+            shape,
+          ),
+        );
+      }
+      positions.needsUpdate = true;
+      geometry.computeVertexNormals();
+      geometry.computeBoundingSphere();
+      lastShape = shape;
+      lastFormation = formation;
     }
-    positions.needsUpdate = true;
-    geometry.computeVertexNormals();
     const sauceProgress = smooth(topping, 0.02, 0.42);
     sauce.visible = topping > 0.12;
     sauce.scale.set(

@@ -33,10 +33,11 @@ export const experienceCopy = {
     returnSlice: "ნაჭრის დაბრუნება",
     storyEnd: "გაზიარება სურვილისამებრ.",
     making: {
-      title: "ყველაფერი\nფქვილით იწყება.",
-      note: "ცოტა ფქვილი. დიდი ამბის დასაწყისი.",
+      title: "დიდი გემო.\nპატარა დასაწყისი.",
+      note: "ფქვილი. წყალი. დრო. და ერთი სწორი კუთხე.",
+      eyebrow: "00 / დასაწყისი",
       begin: "მოვამზადოთ",
-      replay: "ფქვილის ხელახლა დაყრა",
+      replay: "დასაწყისის გამეორება",
       next: "შემდეგი ეტაპი",
       chapters: "პიცის მომზადების ეტაპები",
       stages: [
@@ -131,10 +132,11 @@ export const experienceCopy = {
     returnSlice: "Return the slice",
     storyEnd: "Sharing is optional.",
     making: {
-      title: "It all begins\nwith flour.",
-      note: "A little flour. The start of something good.",
+      title: "Big flavor.\nA small beginning.",
+      note: "Flour. Water. Time. And one right angle.",
+      eyebrow: "00 / The beginning",
       begin: "Let's make it",
-      replay: "Pour the flour again",
+      replay: "Replay the beginning",
       next: "Next chapter",
       chapters: "The making of a pizza",
       stages: [

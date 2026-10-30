@@ -124,14 +124,32 @@ async function check(browser, size, engine) {
   difference(sauce, await canvasPixels(canvas));
   await page.getByRole("button", { name: "4. 9 ნაჭერი", exact: true }).click();
   await page.locator('.xp-stage[data-phase="slices"]').waitFor();
+  // Wait for the scroll destination and entering copy, not a transitional frame.
   await page.waitForFunction(
-    () => Number(document.querySelector(".xp-stage").dataset.local) > 0.5,
+    () => {
+      const stage = document.querySelector(".xp-stage");
+      const copy = document.querySelector(".xp-chapter-copy");
+      return (
+        stage.dataset.phase === "slices" &&
+        Math.abs(Number(stage.dataset.local) - 0.55) < 0.005 &&
+        copy &&
+        getComputedStyle(copy).transform === "none"
+      );
+    },
+    null,
+    { polling: 100 },
   );
   await page
     .getByRole("button", { name: "ეს ნაჭერი ჩემია", exact: true })
     .click();
+  await page
+    .locator(".xp-chapter-copy")
+    .getByRole("button", { name: "ნაჭრის დაბრუნება", exact: true })
+    .waitFor();
   await page.waitForFunction(
     () => Number(document.querySelector(".xp-stage").dataset.lift) > 0.95,
+    null,
+    { polling: 100 },
   );
   await page.screenshot({
     path: `${output}/${engine}-pull-${size.width}x${size.height}.png`,

@@ -32,6 +32,7 @@ export default function MakingWorld({
   const [chapter, setChapter] = useState(0);
   const currentChapter = useRef(0);
   const [ready, setReady] = useState(false);
+  const [introReady, setIntroReady] = useState(false);
   const [state, setState] = useState<StageState>({
     open: true,
     lift: false,
@@ -75,7 +76,12 @@ export default function MakingWorld({
       id="top"
       aria-labelledby="xp-title"
     >
-      <div className="xp-world-sticky" data-chapter={storyIds[chapter]}>
+      <div
+        className="xp-world-sticky"
+        data-chapter={storyIds[chapter]}
+        data-intro-ready={introReady || reduced}
+        data-scene-ready={ready}
+      >
         <div className="xp-wordmark" aria-hidden={chapter !== 0}>
           <h1 id="xp-title">90pizza</h1>
         </div>
@@ -89,15 +95,16 @@ export default function MakingWorld({
           label={copy.making.chapters}
           fallbackDough={chapter < 3}
           onReady={setReady}
+          onIntroReady={setIntroReady}
           onInteract={lift}
         />
         <div
           className="xp-opening"
-          inert={chapter !== 0}
-          aria-hidden={chapter !== 0}
+          inert={chapter !== 0 || (!introReady && !reduced)}
+          aria-hidden={chapter !== 0 || (!introReady && !reduced)}
         >
           <div>
-            <span className="xp-kicker">90° / 30×30 / 09</span>
+            <span className="xp-kicker">{copy.making.eyebrow}</span>
             <h2>{copy.making.title}</h2>
             <p>{copy.making.note}</p>
           </div>
@@ -138,7 +145,11 @@ export default function MakingWorld({
             )}
           </motion.div>
         )}
-        <div className="xp-scene-controls" role="group" aria-label={copy.scene}>
+        <div
+          className="xp-scene-controls"
+          role="group"
+          aria-label={copy.making.chapters}
+        >
           {chapter === 0 && (
             <button
               className="xp-icon"

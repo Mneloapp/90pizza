@@ -23,6 +23,7 @@ type Props = {
   label: string;
   fallbackDough: boolean;
   onReady: (ready: boolean) => void;
+  onIntroReady: (ready: boolean) => void;
   onInteract: () => void;
 };
 
@@ -33,18 +34,19 @@ export default function PizzaStage({
   label,
   fallbackDough,
   onReady,
+  onIntroReady,
   onInteract,
 }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const inputs = useRef({ state, reduced, onReady, onInteract });
+  const inputs = useRef({ state, reduced, onReady, onIntroReady, onInteract });
   const invalidate = useRef<() => void>(() => {});
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
-    inputs.current = { state, reduced, onReady, onInteract };
+    inputs.current = { state, reduced, onReady, onIntroReady, onInteract };
     invalidate.current();
-  }, [state, reduced, onReady, onInteract]);
+  }, [state, reduced, onReady, onIntroReady, onInteract]);
 
   useEffect(() => {
     const element = root.current,
@@ -123,7 +125,7 @@ export default function PizzaStage({
       food.add(preparation.group);
       const flour = buildFlour({ keep }, window.innerWidth < 700);
       world.add(flour.group);
-      scene.add(flour.curtain);
+      world.add(flour.curtain);
       const oven = buildOven({ keep });
       world.add(oven.group);
       const cheese = buildCheese({ keep });
@@ -144,8 +146,9 @@ export default function PizzaStage({
         chapter = 0;
       let width = 1,
         height = 1;
-      let introElapsed = 0.65,
-        lastPour = 0;
+      let introElapsed = 0,
+        lastPour = 0,
+        introReady = false;
       const pointer = new THREE.Vector2(),
         pointerTarget = new THREE.Vector2(),
         center = new THREE.Vector2();
@@ -174,7 +177,7 @@ export default function PizzaStage({
         const { index, local } = step;
         if (current.pour !== lastPour) {
           lastPour = current.pour;
-          introElapsed = 0.65;
+          introElapsed = 0;
         }
         if (index === 0)
           introElapsed = quiet ? 6 : Math.min(6, introElapsed + dt);
@@ -184,9 +187,19 @@ export default function PizzaStage({
           index === 0,
           quiet,
           renderer.getPixelRatio(),
+          height,
         );
-        floor.visible = index !== 0;
-        const doughReveal = smooth(introElapsed, 2.2, 5.2);
+        const showIntroCopy = introElapsed > 3.4 || quiet;
+        if (showIntroCopy !== introReady) {
+          introReady = showIntroCopy;
+          inputs.current.onIntroReady(introReady);
+        }
+        floor.visible = index !== 0 || introElapsed > 3.4;
+        const doughReveal = smooth(introElapsed, 2.9, 4.5);
+        scene.environmentIntensity = index < 2 ? 0.25 : 0.45;
+        key.intensity = index < 2 ? 2.4 : 1.8;
+        key.position.set(-4, index < 2 ? 5 : 8, 5);
+        fill.intensity = index < 2 ? 0.85 : 0.5;
         const targetChapter = index === 0 ? 0 : 1;
         chapter = quiet
           ? targetChapter
@@ -216,7 +229,7 @@ export default function PizzaStage({
               ? 0
               : chapter * 1.65;
         const sizeTarget =
-          index === 0 ? 2.1 : index === 3 ? 1.06 : index === 5 ? 1.06 : 1.36;
+          index === 0 ? 2.05 : index === 3 ? 1.06 : index === 5 ? 1.06 : 1.36;
         world.scale.setScalar(damp(world.scale.x, sizeTarget));
         world.position.y =
           (index === 1 || index === 2 ? 0.2 : -0.1) +
@@ -240,15 +253,14 @@ export default function PizzaStage({
           index === 3 ? 8 + (quiet ? 0 : Math.sin(time * 0.002) * 0.8) : 0;
         const preparing = index < 3 || (index === 3 && local < 0.56);
         preparation.group.visible = preparing;
-        preparation.group.scale.setScalar(
-          index === 0 ? Math.max(0.001, doughReveal) : 1,
-        );
+        preparation.group.scale.setScalar(1);
         if (preparing)
           preparation.update(
             index === 0 ? 0 : index === 1 ? local : 1,
             index < 2 ? 0 : index === 2 ? local : 1,
             time,
             quiet,
+            index === 0 ? doughReveal : 1,
           );
         const ovenCamera = index === 3 ? 1 : 0;
         const distance =
@@ -256,7 +268,11 @@ export default function PizzaStage({
             ? (index === 0 ? 0.85 : 1.25) / camera.aspect
             : 1.08;
         camera.position
-          .set(4.2, THREE.MathUtils.lerp(7.8, 4.3, ovenCamera), 8.6)
+          .set(
+            index === 0 ? 3.2 : 4.2,
+            index === 0 ? 4.8 : THREE.MathUtils.lerp(7.8, 4.3, ovenCamera),
+            8.6,
+          )
           .multiplyScalar(distance);
         look.set(0, index === 5 ? 1 : 0.35, index === 3 ? -1.1 : -0.15);
         camera.lookAt(look);
@@ -287,6 +303,12 @@ export default function PizzaStage({
         element.dataset.local = local.toFixed(3);
         element.dataset.intro = introElapsed.toFixed(2);
         element.dataset.flour = String(flour.curtain.visible);
+        element.dataset.burst =
+          introElapsed < 1.8
+            ? "expand"
+            : introElapsed < 4.5
+              ? "gather"
+              : "settled";
         element.dataset.product = preparing ? "dough" : "pizza";
         const canRender = loaded || preparing;
         if (element.dataset.ready !== String(canRender)) {
@@ -313,6 +335,7 @@ export default function PizzaStage({
         if (!disposed) {
           setFailed(true);
           inputs.current.onReady(false);
+          inputs.current.onIntroReady(true);
         }
       };
       image.src = "/images/square-drop/pepperoni.webp";
@@ -390,12 +413,14 @@ export default function PizzaStage({
         cancelAnimationFrame(frame);
         setFailed(true);
         inputs.current.onReady(false);
+        inputs.current.onIntroReady(true);
       };
       surface.addEventListener("webglcontextlost", contextLost);
       request();
     } catch {
       setFailed(true);
       inputs.current.onReady(false);
+      inputs.current.onIntroReady(true);
     }
     return () => {
       disposed = true;
@@ -426,7 +451,7 @@ export default function PizzaStage({
       data-failed={failed}
     >
       <canvas ref={canvas} aria-label={label} role="img" />
-      {(!ready || failed) && (
+      {failed && (
         <div className="xp-stage-fallback">
           {fallbackDough ? (
             <div
