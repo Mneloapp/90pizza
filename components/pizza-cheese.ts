@@ -1,128 +1,209 @@
 import * as THREE from "three";
 import type { Resources } from "./pizza-model";
 
+const { smoothstep: smooth } = THREE.MathUtils;
+const random = (n: number) => {
+  const value = Math.sin(n * 127.1 + 19.3) * 43758.5453;
+  return value - Math.floor(value);
+};
+
 export function cheeseConnections() {
-  const pairs: { a: number; b: number; axis: "x" | "z"; offset: number }[] = [];
+  const cuts: { a: number; b: number; axis: "x" | "z" }[] = [];
   for (let i = 0; i < 9; i++) {
-    for (const offset of [-0.39, -0.14, 0.12, 0.37]) {
-      if (i % 3 < 2) pairs.push({ a: i, b: i + 1, axis: "x", offset });
-      if (i < 6) pairs.push({ a: i, b: i + 3, axis: "z", offset });
-    }
+    if (i % 3 < 2) cuts.push({ a: i, b: i + 1, axis: "x" });
+    if (i < 6) cuts.push({ a: i, b: i + 3, axis: "z" });
   }
-  return pairs;
+  return cuts;
+}
+
+export function positionSlice(
+  slice: THREE.Group,
+  index: number,
+  spread: number,
+  lift: number,
+) {
+  const home = slice.userData.home as THREE.Vector3;
+  const delay = ((index % 3) + Math.floor(index / 3)) * 0.045;
+  const slide = smooth(spread, delay, 0.75 + delay);
+  slice.position.copy(home).multiplyScalar(1 + slide * 0.065);
+  slice.position.y = 0;
+  slice.rotation.set(0, 0, 0);
+  if (index === 6) {
+    slice.position.x -= lift * 0.28;
+    slice.position.z += lift * 0.12;
+    slice.position.y += lift * 0.94;
+    slice.rotation.z = lift * 0.09;
+    slice.rotation.x = lift * 0.05;
+  }
 }
 
 export function buildCheese({ keep }: Resources) {
   const group = new THREE.Group();
-  const material = keep(
-    new THREE.MeshPhysicalMaterial({
-      color: "#fff0c5",
-      roughness: 0.43,
-      clearcoat: 0.16,
-      side: THREE.DoubleSide,
+  const cuts = cheeseConnections();
+  const across = 28,
+    along = 14;
+  // Thin membranes narrow, perforate and release; they are not cylindrical cords.
+  const films = cuts.flatMap((cut, index) =>
+    [0, 1].map((part) => {
+      const seed = random(index * 11 + part * 7 + 3);
+      const opening = { value: 0 };
+      const material = keep(
+        new THREE.MeshPhysicalMaterial({
+          color: "#f1dfbc",
+          roughness: 0.42,
+          clearcoat: 0.14,
+          sheen: 0.2,
+          sheenColor: new THREE.Color("#fff4d9"),
+          side: THREE.DoubleSide,
+          alphaTest: 0.5,
+          alphaToCoverage: true,
+        }),
+      );
+      material.onBeforeCompile = (shader) => {
+        shader.uniforms.filmOpening = opening;
+        shader.uniforms.filmSeed = { value: seed };
+        shader.vertexShader =
+          `varying vec2 filmUv;\n${shader.vertexShader}`.replace(
+            "#include <begin_vertex>",
+            "#include <begin_vertex>\nfilmUv = uv;",
+          );
+        shader.fragmentShader =
+          `varying vec2 filmUv; uniform float filmOpening; uniform float filmSeed;\n${shader.fragmentShader}`.replace(
+            "#include <alphatest_fragment>",
+            `
+        vec2 q = vec2(filmUv.x, filmUv.y * 2.0 - 1.0);
+        float a = length((q - vec2(0.46 + filmSeed * 0.07, 0.28)) / vec2(0.29, 0.48 * filmOpening + 0.001));
+        float b = length((q - vec2(0.57, -0.46)) / vec2(0.23, 0.38 * filmOpening + 0.001));
+        float edge = min(a, b);
+        diffuseColor.a *= smoothstep(1.0 - fwidth(edge), 1.0 + fwidth(edge), edge);
+        #include <alphatest_fragment>
+      `,
+          );
+      };
+      const geometry = keep(new THREE.BufferGeometry());
+      geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+          new Float32Array((across + 1) * (along + 1) * 3),
+          3,
+        ).setUsage(THREE.DynamicDrawUsage),
+      );
+      const uv: number[] = [],
+        indices: number[] = [];
+      for (let i = 0; i <= across; i++)
+        for (let j = 0; j <= along; j++) {
+          uv.push(i / across, j / along);
+          if (i < across && j < along) {
+            const k = i * (along + 1) + j;
+            indices.push(
+              k,
+              k + along + 1,
+              k + 1,
+              k + 1,
+              k + along + 1,
+              k + along + 2,
+            );
+          }
+        }
+      geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      geometry.setIndex(indices);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.frustumCulled = false;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+      return {
+        ...cut,
+        mesh,
+        part,
+        seed,
+        opening,
+        width: part ? 0.1 + seed * 0.07 : 0.46 + seed * 0.1,
+        offset: part ? (index % 2 ? -0.38 : 0.38) : (seed - 0.5) * 0.28,
+      };
     }),
   );
-  const rings = 20,
-    sides = 6;
-  const pairs = cheeseConnections();
-  const strands = pairs.map(() => {
-    const geometry = keep(new THREE.BufferGeometry());
-    geometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(
-        new Float32Array((rings + 1) * sides * 3),
-        3,
-      ).setUsage(THREE.DynamicDrawUsage),
-    );
-    const indices: number[] = [];
-    for (let s = 0; s < rings; s++)
-      for (let r = 0; r < sides; r++) {
-        const a = s * sides + r,
-          b = s * sides + ((r + 1) % sides);
-        indices.push(a, b, a + sides, b, b + sides, a + sides);
-      }
-    geometry.setIndex(indices);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.frustumCulled = false;
-    group.add(mesh);
-    return mesh;
-  });
   const start = new THREE.Vector3(),
-    end = new THREE.Vector3(),
-    tangent = new THREE.Vector3();
-  const normal = new THREE.Vector3(),
-    binormal = new THREE.Vector3(),
+    end = new THREE.Vector3();
+  const sideA = new THREE.Vector3(),
+    sideB = new THREE.Vector3(),
+    side = new THREE.Vector3(),
     point = new THREE.Vector3();
-  const up = new THREE.Vector3(0, 1, 0),
-    right = new THREE.Vector3(1, 0, 0);
-  let active = 0,
-    previous = "";
+  let previous = "",
+    active = 0;
   function update(slices: THREE.Group[], spread: number, lift: number) {
-    group.visible = spread > 0.015 || lift > 0.015;
+    group.visible = spread > 0.02 || lift > 0.02;
     if (!group.visible) {
       active = 0;
+      previous = "";
       return;
     }
-    const signature = `${spread.toFixed(4)}/${lift.toFixed(4)}`;
+    const signature = spread.toFixed(4) + "/" + lift.toFixed(4);
     if (signature === previous) return;
     previous = signature;
     active = 0;
     slices.forEach((slice) => slice.updateMatrix());
-    pairs.forEach(({ a, b, axis, offset }, index) => {
-      const variation = Math.sin((a * 13 + b * 7 + offset * 31) * 1.7);
-      const unevenOffset = offset + variation * 0.055;
+    for (const film of films) {
+      const { a, b, axis, mesh, seed, part, offset } = film;
+      const retained = (a === 6 || b === 6) && !part;
       start
         .set(
-          axis === "x" ? 0.57 : unevenOffset,
-          0.075,
-          axis === "z" ? 0.57 : unevenOffset,
+          axis === "x" ? 0.597 : offset,
+          0.058,
+          axis === "z" ? 0.597 : offset,
         )
         .applyMatrix4(slices[a].matrix);
       end
         .set(
-          axis === "x" ? -0.57 : unevenOffset + variation * 0.025,
-          0.075,
-          axis === "z" ? -0.57 : unevenOffset + variation * 0.025,
+          axis === "x" ? -0.597 : offset + (seed - 0.5) * 0.045,
+          0.058,
+          axis === "z" ? -0.597 : offset + (seed - 0.5) * 0.045,
         )
         .applyMatrix4(slices[b].matrix);
-      const length = start.distanceTo(end);
-      const mesh = strands[index];
-      mesh.visible = length > 0.085;
-      if (!mesh.visible) return;
+      const distance = start.distanceTo(end);
+      const release = retained
+        ? 0
+        : smooth(spread, 0.42 + seed * 0.16, 0.68 + seed * 0.18);
+      mesh.visible = distance > 0.024 && release < 0.995;
+      if (!mesh.visible) continue;
       active++;
+      film.opening.value = smooth(distance, 0.025, 0.22) * 0.74;
+      sideA
+        .set(axis === "z" ? 1 : 0, 0, axis === "x" ? 1 : 0)
+        .transformDirection(slices[a].matrix);
+      sideB
+        .set(axis === "z" ? 1 : 0, 0, axis === "x" ? 1 : 0)
+        .transformDirection(slices[b].matrix);
       const positions = mesh.geometry.attributes
         .position as THREE.BufferAttribute;
-      const sag = Math.min(0.26, length * 0.22);
-      for (let s = 0; s <= rings; s++) {
-        const t = s / rings;
-        point.lerpVectors(start, end, t);
-        point.y -= Math.sin(t * Math.PI) * sag;
-        tangent.subVectors(end, start);
-        tangent.y -= Math.cos(t * Math.PI) * Math.PI * sag;
-        tangent.normalize();
-        normal
-          .crossVectors(tangent, Math.abs(tangent.y) > 0.9 ? right : up)
-          .normalize();
-        binormal.crossVectors(tangent, normal).normalize();
-        const attachment = Math.abs(t * 2 - 1) ** 4;
-        const radius =
-          ((0.014 + attachment * 0.042) * (0.9 + variation * 0.2)) /
-          Math.sqrt(1 + length * 1.8);
-        for (let r = 0; r < sides; r++) {
-          const angle = (r / sides) * Math.PI * 2;
-          const nx = Math.cos(angle) * radius,
-            ny = Math.sin(angle) * radius;
-          positions.setXYZ(
-            s * sides + r,
-            point.x + normal.x * nx + binormal.x * ny,
-            point.y + normal.y * nx + binormal.y * ny,
-            point.z + normal.z * nx + binormal.z * ny,
+      const neck = Math.min(0.72, 0.25 + distance * 0.6);
+      const sag = Math.min(0.18, distance * 0.14);
+      for (let i = 0; i <= across; i++) {
+        const t = i / across,
+          middle = Math.sin(t * Math.PI);
+        const width =
+          film.width *
+          (retained ? 0.2 + 0.8 * smooth(lift, 0, 0.65) : 1) *
+          (1 - neck * middle ** 0.7) *
+          (1 - release * middle ** 0.3);
+        side.lerpVectors(sideA, sideB, t).normalize();
+        for (let j = 0; j <= along; j++) {
+          const u = (j / along) * 2 - 1;
+          point
+            .lerpVectors(start, end, t)
+            .addScaledVector(side, u * width * 0.5);
+          point.y -= middle * sag;
+          point.y += middle * Math.sin(u * 4.2 + seed * 8 + t * 2) * 0.008;
+          point.y += middle * (1 - u * u) * 0.009;
+          point.addScaledVector(
+            side,
+            middle * Math.sin(t * 4 + seed * 6) * distance * 0.025,
           );
+          positions.setXYZ(i * (along + 1) + j, point.x, point.y, point.z);
         }
       }
       positions.needsUpdate = true;
       mesh.geometry.computeVertexNormals();
-    });
+    }
   }
   return {
     group,

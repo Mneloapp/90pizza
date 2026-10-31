@@ -4,17 +4,27 @@ const { smoothstep: smooth, lerp } = MathUtils;
 
 export function ovenFraming(width: number, height: number, local: number) {
   const portrait = width / height < 1.1;
-  const push = 1 - smooth(local, 0.2, 0.8) * 0.025;
+  const push = smooth(local, 0.12, 0.65);
+  const portraitDistance = Math.max(12.5, (6.8 * height) / width);
+  const portraitHeight = portraitDistance * 0.36 + 0.45;
   return {
-    position: (portrait ? [0.4, 8, 14] : [3.5, 3.6, 7.8]).map(
-      (v) => v * push,
-    ) as [number, number, number],
-    target: (portrait ? [0, 1.8, -0.3] : [-1.6, 0.4, -0.3]) as [
+    position: (portrait
+      ? [
+          lerp(0.7, 0.25, push),
+          lerp(portraitHeight + 1.1, portraitHeight, push),
+          lerp(portraitDistance + 7, portraitDistance, push),
+        ]
+      : [lerp(2.4, 0.65, push), lerp(4.7, 3.1, push), lerp(10, 6.4, push)]) as [
       number,
       number,
       number,
     ],
-    travel: 1.4 * (1 - smooth(local, 0.06, 0.3)),
+    target: (portrait ? [0, 0.65, -2] : [-0.9, 0.45, -2]) as [
+      number,
+      number,
+      number,
+    ],
+    travel: lerp(1.1, -1.85, smooth(local, 0.08, 0.34)),
   };
 }
 

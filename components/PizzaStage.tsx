@@ -6,9 +6,9 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { buildPizza } from "./pizza-model";
 import { buildBox, boxPose } from "./pizza-packaging";
-import { buildCheese } from "./pizza-cheese";
+import { buildCheese, positionSlice } from "./pizza-cheese";
 import { buildPreparation } from "./pizza-preparation";
-import { buildOven } from "./pizza-oven";
+import { buildOven, ovenMotion } from "./pizza-oven";
 import { toppingState } from "./pizza-toppings";
 import { storyAt } from "./pizza-story";
 import { buildFlour } from "./pizza-flour";
@@ -132,7 +132,7 @@ export default function PizzaStage({
       const flour = buildFlour({ keep }, window.innerWidth < 700);
       world.add(flour.group);
       world.add(flour.curtain);
-      const oven = buildOven({ keep });
+      const oven = buildOven({ keep }, () => request());
       scene.add(oven.group);
       const cheese = buildCheese({ keep });
       food.add(cheese.group);
@@ -190,6 +190,7 @@ export default function PizzaStage({
         const { index, local } = step;
         const inOven = raw >= 0.511 && raw < 0.66;
         const ovenFrame = ovenFraming(width, height, local);
+        const ovenPose = ovenMotion(local);
         const packing = boxPose(index === 5 ? local : 0);
         if (current.pour !== lastPour) {
           lastPour = current.pour;
@@ -229,13 +230,16 @@ export default function PizzaStage({
         scene.environmentIntensity = inOven
           ? 0.15
           : 0.45 - framing.preparation * 0.2;
-        key.intensity = inOven ? 1.65 : 1.8 + framing.preparation * 0.6;
-        key.position.set(-4, 8 - framing.preparation * 3, 5);
+        key.intensity = inOven ? 0.85 : 1.8 + framing.preparation * 0.6;
+        key.position.set(
+          inOven ? 0 : -4,
+          inOven ? 2 : 8 - framing.preparation * 3,
+          5,
+        );
         fill.intensity = inOven ? 0.18 : 0.5 + framing.preparation * 0.35;
         const openTarget = index === 5 ? packing.open : 1;
         const liftTarget = index === 4 && current.lift ? 1 : 0;
-        const spreadTarget =
-          index === 4 && !current.lift ? smooth(local, 0.02, 0.35) : 0;
+        const spreadTarget = index === 4 ? smooth(local, 0.06, 0.6) : 0;
         const damp = (a: number, b: number) =>
           quiet ? b : THREE.MathUtils.damp(a, b, 5, dt);
         opening = damp(opening, openTarget);
@@ -256,13 +260,14 @@ export default function PizzaStage({
         box.hinge.rotation.x = -opening * 2.05;
         box.group.position.y = -3 * (1 - packing.arrival);
         box.group.visible = index === 5;
-        food.position.y =
-          index === 5 ? 0.015 + 0.65 * (1 - packing.landing) : 0.015;
-        food.position.z = inOven ? ovenFrame.travel : 0;
+        food.position.y = inOven
+          ? ovenPose.pizzaY
+          : index === 5
+            ? 0.015 + 0.65 * (1 - packing.landing)
+            : 0.015;
+        food.position.z = inOven ? ovenPose.pizzaZ : 0;
         oven.group.visible = inOven;
-        oven.light.intensity = inOven
-          ? 18 + (quiet ? 0 : Math.sin(time * 0.002) * 0.5)
-          : 0;
+        if (inOven) oven.update(local, time, quiet);
         const bake = index === 3 ? smooth(local, 0.26, 0.8) : 0;
         const preparing = raw < 0.66;
         preparation.group.visible = preparing;
@@ -295,19 +300,9 @@ export default function PizzaStage({
         }
         if (pizza) {
           pizza.group.visible = !preparing;
-          pizza.slices.forEach((slice, index) => {
-            const home = slice.userData.home as THREE.Vector3;
-            slice.position.copy(home).multiplyScalar(1 + spreading * 0.13);
-            slice.position.y = spreading * Math.sin(index * 0.95) * 0.055;
-            slice.rotation.set(0, 0, 0);
-            if (index === 6) {
-              slice.position.x -= lifting * 0.6;
-              slice.position.z += lifting * 0.12;
-              slice.position.y += lifting * 1.8;
-              slice.rotation.z = lifting * 0.14;
-              slice.rotation.x = lifting * 0.12;
-            }
-          });
+          pizza.slices.forEach((slice, index) =>
+            positionSlice(slice, index, spreading, lifting),
+          );
           cheese.update(pizza.slices, spreading, lifting);
           cheese.group.visible = cheese.group.visible && !preparing;
         }
@@ -345,6 +340,7 @@ export default function PizzaStage({
         element.dataset.product = preparing ? "dough" : "pizza";
         element.dataset.oven = String(inOven);
         element.dataset.bake = bake.toFixed(3);
+        element.dataset.peel = String(inOven && oven.peel.visible);
         element.dataset.cheeseBridges = String(cheese.active);
         element.dataset.boxArt = String(box.loaded.size);
         element.dataset.cheeseCoverage = toppingState(

@@ -88,15 +88,27 @@ function doughSurface({ keep }: Resources, onAsset: () => void) {
       sheenColor: new THREE.Color("#fff6e5"),
     }),
   );
+  const crustBake = { value: 0 };
+  const crust = keep(
+    new THREE.TextureLoader().load(
+      "/images/square-drop/pepperoni.webp",
+      onAsset,
+    ),
+  );
+  crust.colorSpace = THREE.SRGBColorSpace;
+  crust.anisotropy = 4;
+  material.userData.crustBake = crustBake;
   // Object-space projection avoids pinching the flour texture at sphere UV poles.
   material.onBeforeCompile = (shader) => {
+    shader.uniforms.crustBake = crustBake;
+    shader.uniforms.crustMap = { value: crust };
     shader.vertexShader =
       `varying vec3 doughPosition; varying vec3 doughNormal;\n${shader.vertexShader}`.replace(
         "#include <begin_vertex>",
         "#include <begin_vertex>\ndoughPosition = position; doughNormal = normal;",
       );
     shader.fragmentShader =
-      `varying vec3 doughPosition; varying vec3 doughNormal;\n${shader.fragmentShader}`
+      `varying vec3 doughPosition; varying vec3 doughNormal; uniform float crustBake; uniform sampler2D crustMap;\n${shader.fragmentShader}`
         .replace(
           "#include <map_fragment>",
           `
@@ -106,6 +118,9 @@ function doughSurface({ keep }: Resources, onAsset: () => void) {
         diffuseColor *= texture2D(map, doughUv.yz) * doughWeights.x
           + texture2D(map, doughUv.xz) * doughWeights.y
           + texture2D(map, doughUv.xy) * doughWeights.z;
+        vec2 crustUv = vec2(doughPosition.x / 3.6 + 0.5, 0.5 - doughPosition.z / 3.6);
+        vec3 toasted = texture2D(crustMap, clamp(crustUv, 0.0, 1.0)).rgb;
+        diffuseColor.rgb = mix(diffuseColor.rgb, toasted, crustBake * smoothstep(0.1, 0.6, doughNormal.y));
       `,
         )
         .replace(
@@ -225,6 +240,7 @@ export function buildPreparation({ keep }: Resources, onAsset: () => void) {
   function update(form: number, topping: number, bake: number, formation = 1) {
     const shape = form;
     doughMaterial.color.setRGB(1, 1 - bake * 0.29, 1 - bake * 0.57);
+    doughMaterial.userData.crustBake.value = smooth(bake, 0.2, 0.9);
     dough.visible = formation > 0.001;
     const changing = Math.abs(form - lastShape) > 0.00005;
     if (changing) pose = doughPose(form);

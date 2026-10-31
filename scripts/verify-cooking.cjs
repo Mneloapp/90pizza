@@ -25,8 +25,24 @@ function source(name) {
 function geometry() {
   const { boxPose, BOX_LID_HEIGHT } = source("pizza-packaging");
   const { toppingState, saucePath } = source("pizza-toppings");
-  const { buildCheese, cheeseConnections } = source("pizza-cheese");
+  const { buildCheese, cheeseConnections, positionSlice } =
+    source("pizza-cheese");
   const { ovenFraming } = source("pizza-camera");
+  const { buildOven, ovenMotion } = source("pizza-oven");
+  const ovenResources = [];
+  const loadTexture = THREE.TextureLoader.prototype.load;
+  THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+  const oven = buildOven(
+    {
+      keep: (item) => {
+        ovenResources.push(item);
+        return item;
+      },
+    },
+    () => {},
+  );
+  THREE.TextureLoader.prototype.load = loadTexture;
+  const ray = new THREE.Raycaster();
   for (const [width, height] of [
     [1440, 1000],
     [390, 844],
@@ -40,6 +56,10 @@ function geometry() {
       camera.position.fromArray(view.position);
       camera.lookAt(...view.target);
       camera.updateMatrixWorld();
+      const pose = ovenMotion(local);
+      assert.equal(pose.pizzaZ, view.travel);
+      oven.update(local, 0, true);
+      oven.group.updateMatrixWorld(true);
       for (const x of [-1.85, 1.85])
         for (const z of [-1.85, 1.85]) {
           const corner = new THREE.Vector3(x, 0.2, z + view.travel).project(
@@ -50,8 +70,31 @@ function geometry() {
             `Oven pizza clipped at ${width}x${height}, ${local}`,
           );
         }
+      for (const x of [-1.72, 0, 1.72])
+        for (const z of [-1.72, 0, 1.72]) {
+          const food = new THREE.Vector3(
+            x,
+            0.18 + pose.pizzaY,
+            z + pose.pizzaZ,
+          );
+          const distance = camera.position.distanceTo(food);
+          ray.set(camera.position, food.sub(camera.position).normalize());
+          const hit = ray.intersectObject(oven.group, true)[0];
+          assert(
+            !hit || hit.distance > distance,
+            `Oven roof obscures pizza at ${width}x${height}, ${local}, ${x}/${z}`,
+          );
+        }
     }
   }
+  assert(ovenMotion(0.2).peelVisible);
+  assert(!ovenMotion(0.6).peelVisible);
+  assert.equal(
+    ovenMotion(0.5).pizzaZ,
+    ovenMotion(0.9).pizzaZ,
+    "Pizza stays on the stone when the peel withdraws",
+  );
+  ovenResources.forEach((item) => item.dispose());
   assert.equal(boxPose(1).open, 0);
   assert.equal(boxPose(0.88).open, 0);
   assert(BOX_LID_HEIGHT > 0.2, "Closed lid must clear pizza and toppings");
@@ -80,38 +123,55 @@ function geometry() {
   });
   const slices = Array.from({ length: 9 }, (_, i) => {
     const group = new THREE.Group();
-    group.position.set(
-      ((i % 3) - 1) * 1.208 * 1.13,
-      0,
-      (Math.floor(i / 3) - 1) * 1.208 * 1.13,
-    );
-    return group;
-  });
-  cheese.update(slices, 1, 0);
-  assert.equal(cheese.active, 48, "All twelve cuts have four cheese bridges");
-  slices.forEach((slice, i) =>
-    slice.position.set(
+    group.userData.home = new THREE.Vector3(
       ((i % 3) - 1) * 1.208,
       0,
       (Math.floor(i / 3) - 1) * 1.208,
-    ),
-  );
-  slices[6].position.y += 1.8;
-  cheese.update(slices, 0, 1);
+    );
+    return group;
+  });
+  slices.forEach((slice, i) => positionSlice(slice, i, 0.4, 0));
+  cheese.update(slices, 0.4, 0);
+  const earlyFilms = cheese.active;
+  assert(earlyFilms > 0, "Cheese attaches while neighboring cuts separate");
+  slices.forEach((slice, i) => positionSlice(slice, i, 1, 0));
+  cheese.update(slices, 1, 0);
   assert.equal(
     cheese.active,
-    8,
-    "Only the lifted slice's two neighboring cuts stretch",
+    2,
+    "Retain the corner's two connections before lifting",
   );
+  assert(
+    cheese.active < earlyFilms,
+    "Most connections release rather than stitch the grid together",
+  );
+  const resting = slices.map((slice) => slice.position.clone());
+  slices.forEach((slice, i) => positionSlice(slice, i, 1, 1));
+  cheese.update(slices, 1, 1);
+  assert.equal(
+    cheese.active,
+    2,
+    "Lifting cannot reconnect already released seams",
+  );
+  assert(slices[6].position.y > 0.8 && slices[6].position.y < 1.1);
+  slices.forEach((slice, i) => {
+    if (i !== 6)
+      assert(
+        slice.position.equals(resting[i]),
+        "Other slices cannot collapse on lift",
+      );
+  });
   for (const mesh of cheese.group.children) {
     const vertices = mesh.geometry.attributes.position.array;
     assert([...vertices].every(Number.isFinite));
+    assert.equal(mesh.geometry.type, "BufferGeometry");
+    if (mesh.visible) assert(mesh.geometry.index.count > 0);
   }
   cheese.update(slices, 0, 0);
   assert.equal(cheese.group.visible, false);
   resources.forEach((r) => r.dispose());
   console.log(
-    "PASS sauce path, topping order, 48 anchored cheese bridges and box clearance",
+    "PASS sauce path, topping order, coplanar slices, releasing cheese membranes and box clearance",
   );
 }
 
@@ -156,11 +216,19 @@ async function check(browser, url, output, width) {
   const covered = await seek(0.455, "cheese-covered");
   assert.equal(Number(covered.cheeseCoverage), 1);
   await seek(0.495, "pepperoni-ready");
+  const insertion = await seek(0.535, "oven-insertion");
+  assert.equal(insertion.peel, "true");
   const oven = await seek(0.6, "oven-room");
   assert.equal(oven.oven, "true");
+  assert.equal(oven.peel, "false");
   await seek(0.643, "oven-baked");
+  await seek(0.715, "cheese-separating");
   const separated = await seek(0.77, "cheese-bridges");
-  assert.equal(Number(separated.cheeseBridges), 48);
+  assert.equal(
+    Number(separated.cheeseBridges),
+    2,
+    "Only two fine connections remain attached to the liftable corner",
+  );
   await page
     .getByRole("button", { name: "ეს ნაჭერი ჩემია", exact: true })
     .click();
@@ -193,6 +261,7 @@ async function run(browser, url, output, widths = [1440, 390]) {
   for (const width of widths) await check(browser, url, output, width);
 }
 module.exports = run;
+module.exports.geometry = geometry;
 if (require.main === module)
   (async () => {
     const browser = await chromium.launch({

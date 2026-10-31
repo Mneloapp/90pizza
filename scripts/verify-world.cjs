@@ -125,6 +125,14 @@ async function check(browser, size, engine) {
   const sauce = await canvasPixels(canvas);
   await seek(page, 0.485);
   difference(sauce, await canvasPixels(canvas));
+  await seek(page, 0.535);
+  const enteringOven = await canvasPixels(canvas);
+  await seek(page, 0.635);
+  difference(enteringOven, await canvasPixels(canvas));
+  await seek(page, 0.69);
+  const wholePizza = await canvasPixels(canvas);
+  await seek(page, 0.77);
+  difference(wholePizza, await canvasPixels(canvas));
   await page.getByRole("button", { name: "4. 9 ნაჭერი", exact: true }).click();
   await page.locator('.xp-stage[data-phase="slices"]').waitFor();
   // Wait for the scroll destination and entering copy, not a transitional frame.
@@ -242,6 +250,10 @@ async function quiet(browser, saveData) {
   );
   for (const [name, progress] of chapters) {
     await seek(page, progress);
+    // First-use WebGL compilation can outlast the fixed scroll-settle interval.
+    await page
+      .locator(`.xp-stage[data-phase="${name}"]`)
+      .waitFor({ timeout: 10000 });
     assert.equal(
       await page.locator(".xp-stage").getAttribute("data-phase"),
       name,
@@ -322,19 +334,21 @@ async function touch(browser) {
   await fs.mkdir(output, { recursive: true });
   const chrome = await chromium.launch(options);
   try {
-    const flourCheck = require("./verify-flour.cjs");
-    await flourCheck(chrome, url, output, 1440);
-    await flourCheck(chrome, url, output, 390);
-    await require("./verify-dough.cjs")(chrome, url, output, 390);
-    await require("./verify-cooking.cjs")(chrome, url, output);
-    for (const size of [
-      { width: 1440, height: 1000 },
-      { width: 390, height: 844 },
-      { width: 320, height: 568 },
-      { width: 768, height: 1024 },
-      { width: 844, height: 390 },
-    ])
-      await check(chrome, size, "chrome");
+    if (process.env.STORY_INTERACTIONS_ONLY !== "1") {
+      const flourCheck = require("./verify-flour.cjs");
+      await flourCheck(chrome, url, output, 1440);
+      await flourCheck(chrome, url, output, 390);
+      await require("./verify-dough.cjs")(chrome, url, output, 390);
+      await require("./verify-cooking.cjs")(chrome, url, output);
+      for (const size of [
+        { width: 1440, height: 1000 },
+        { width: 390, height: 844 },
+        { width: 320, height: 568 },
+        { width: 768, height: 1024 },
+        { width: 844, height: 390 },
+      ])
+        await check(chrome, size, "chrome");
+    }
     await quiet(chrome, false);
     await quiet(chrome, true);
     await touch(chrome);
@@ -348,7 +362,11 @@ async function touch(browser) {
   } finally {
     await safari.close();
   }
-  console.log("All pizza-making story checks passed.");
+  console.log(
+    process.env.STORY_INTERACTIONS_ONLY === "1"
+      ? "Story interaction and WebKit checks passed."
+      : "All pizza-making story checks passed.",
+  );
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
