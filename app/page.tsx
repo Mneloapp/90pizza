@@ -1,5 +1,5 @@
-import PizzaExperience from "@/components/PizzaExperience";
+import DetourExperience from "@/components/detour/DetourExperience";
 
 export default function Home() {
-  return <PizzaExperience />;
+  return <DetourExperience />;
 }

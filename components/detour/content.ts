@@ -1,0 +1,231 @@
+export type Language = "ge" | "en";
+
+export const copy = {
+  ge: {
+    skip: "პირდაპირ მენიუზე",
+    story: "აღმოაჩინე",
+    menu: "გემოები",
+    delivery: "მიტანა",
+    nav: "ნავიგაცია",
+    openNav: "მენიუს გახსნა",
+    close: "დახურვა",
+    language: "ენის არჩევა",
+    slogan: "პიცა სწორი კუთხით",
+    hero: "გემოს ახალი მიმართულება.",
+    intro: "ერთი მოხვევა. სრულიად სხვა პიცა.",
+    explore: "აღმოაჩინე გემო",
+    scroll: "გემოსკენ",
+    rotate: "პიცის 90°-ით მობრუნება",
+    pause: "მოძრაობის შეჩერება",
+    play: "მოძრაობის გაგრძელება",
+    scene: "თხელი ოთხკუთხედი პიცა წითელ სივრცეში",
+    chapters: [
+      {
+        label: "სხვა მიმართულება",
+        title: "გემოს ახალი მიმართულება.",
+        text: "ერთი მოხვევა. სრულიად სხვა პიცა.",
+        detail: "90°",
+      },
+      {
+        label: "პირველი ლუკმა",
+        title: "ჯერ ხრაშუნი.",
+        text: "თხელი ძირი. დაბრაწული კიდე. ზედ კი ყველაფერი, რაც გიყვარს.",
+        detail: "30 × 30 სმ",
+      },
+      {
+        label: "გასაზიარებლად",
+        title: "შენი ნაჭერი.\nშენი კუთხე.",
+        text: "ცხრა თანაბარი კვადრატი. ცხრა მიზეზი, ერთად შეიკრიბოთ.",
+        detail: "3 × 3 = 9",
+      },
+      {
+        label: "შენი არჩევანი",
+        title: "ახლა გემომ\nგაგიტაცოს.",
+        text: "კლასიკური თუ ცხარე? შემდეგი მოხვევა შენზეა.",
+        detail: "6 გემო",
+      },
+    ],
+    flavorEyebrow: "06 გემო / ერთი ფორმატი",
+    flavorTitle: "დღეს რომელი\nგემო გინდა?",
+    flavorText: "30 × 30 სმ. თხელი ძირი. გემო, რომელსაც შენი ხასიათი აქვს.",
+    ingredients: "ინგრედიენტები",
+    choose: "ეს მინდა",
+    chosen: "შენი არჩევანი",
+    previous: "წინა გემო",
+    next: "შემდეგი გემო",
+    format: "30 × 30 სმ · 9 ნაჭერი",
+    allergens:
+      "ალერგენები: ხორბალი (გლუტენი), რძე. საბოლოო შემადგენლობა დაზუსტდება გახსნამდე.",
+    soonTitle: "კარგი არჩევანია.",
+    soonText:
+      "ამ გემოს ვამზადებთ მომავალი მენიუსთვის. შეკვეთები ჯერ არ გახსნილა; გახსნის შემდეგ აქ გამოჩნდება მიტანის ბმულები.",
+    back: "სხვა გემოებიც ვნახოთ",
+    deliveryEyebrow: "შემდეგი გაჩერება",
+    deliveryTitle: "შენი მისამართი.",
+    deliveryText:
+      "შექმნილია სწრაფი მიტანისთვის. ოთხკუთხედი ფორმატი, რომელიც შენამდე მოდის.",
+    soon: "მალე",
+    deliveryNote: "მიტანის სერვისი ჯერ არ არის ხელმისაწვდომი.",
+    footer: "სწორი კუთხე. შენი გემო.",
+    prototype:
+      "ბრენდის ვიზუალური პროტოტიპი. გამოსახულებები გენერირებულია; საბოლოო პროდუქტი შეიძლება განსხვავდებოდეს.",
+    top: "დასაწყისში დაბრუნება",
+  },
+  en: {
+    skip: "Skip to flavors",
+    story: "Discover",
+    menu: "Flavors",
+    delivery: "Delivery",
+    nav: "Navigation",
+    openNav: "Open navigation",
+    close: "Close",
+    language: "Choose language",
+    slogan: "Pizza at the right angle",
+    hero: "A new direction for flavor.",
+    intro: "One turn. A different kind of pizza.",
+    explore: "Find your flavor",
+    scroll: "Follow the flavor",
+    rotate: "Rotate pizza by 90 degrees",
+    pause: "Pause motion",
+    play: "Resume motion",
+    scene: "Thin square pizza in a red architectural space",
+    chapters: [
+      {
+        label: "A different direction",
+        title: "A new direction for flavor.",
+        text: "One turn. A different kind of pizza.",
+        detail: "90°",
+      },
+      {
+        label: "The first bite",
+        title: "First, the crunch.",
+        text: "A thin base. A crisp edge. Everything you love on top.",
+        detail: "30 × 30 cm",
+      },
+      {
+        label: "Made to share",
+        title: "Your slice.\nYour corner.",
+        text: "Nine equal squares. Nine reasons to get together.",
+        detail: "3 × 3 = 9",
+      },
+      {
+        label: "Your call",
+        title: "Let your taste\ntake the lead.",
+        text: "Classic or fiery? The next turn is yours.",
+        detail: "6 flavors",
+      },
+    ],
+    flavorEyebrow: "06 flavors / one format",
+    flavorTitle: "Which one\nis you today?",
+    flavorText: "30 × 30 cm. A thin base. A flavor with your personality.",
+    ingredients: "Ingredients",
+    choose: "That's my pizza",
+    chosen: "Your choice",
+    previous: "Previous flavor",
+    next: "Next flavor",
+    format: "30 × 30 cm · 9 slices",
+    allergens:
+      "Allergens: wheat (gluten), milk. Final ingredients will be confirmed before launch.",
+    soonTitle: "Excellent taste.",
+    soonText:
+      "We're developing this flavor for our future menu. Ordering isn't open yet. Delivery links will appear here when we launch.",
+    back: "Explore more flavors",
+    deliveryEyebrow: "The next stop",
+    deliveryTitle: "Your address.",
+    deliveryText: "Built for fast delivery. A square format that comes to you.",
+    soon: "Coming soon",
+    deliveryNote: "Delivery is not available yet.",
+    footer: "The right angle. Your kind of flavor.",
+    prototype:
+      "Brand visual prototype. Images are generated; the final product may differ.",
+    top: "Back to top",
+  },
+};
+
+export const flavors = [
+  {
+    id: "pepperoni",
+    color: "#e01010",
+    ge: {
+      name: "პეპერონი",
+      mood: "ცოტა სითამამე",
+      ingredients: "პეპერონი, მოცარელა, პომიდვრის სოუსი",
+    },
+    en: {
+      name: "Pepperoni",
+      mood: "A little bold",
+      ingredients: "Pepperoni, mozzarella, tomato sauce",
+    },
+  },
+  {
+    id: "margherita",
+    color: "#34654a",
+    ge: {
+      name: "მარგარიტა",
+      mood: "ყოველთვის კლასიკა",
+      ingredients: "პომიდორი, ფიორ დი ლატე, ახალი ბაზილიკი",
+    },
+    en: {
+      name: "Margherita",
+      mood: "Always a classic",
+      ingredients: "Tomato, fior di latte, fresh basil",
+    },
+  },
+  {
+    id: "four-cheese",
+    color: "#ad772f",
+    ge: {
+      name: "ოთხი ყველი",
+      mood: "მეტი ყველი, მეტი სიყვარული",
+      ingredients: "მოცარელა, გორგონზოლა, რიკოტა, პარმეზანი",
+    },
+    en: {
+      name: "Four cheese",
+      mood: "More cheese, more love",
+      ingredients: "Mozzarella, gorgonzola, ricotta, parmesan",
+    },
+  },
+  {
+    id: "mushroom",
+    color: "#6c6559",
+    ge: {
+      name: "სოკო",
+      mood: "გემოს სიღრმე",
+      ingredients: "კრემინი, ხის სოკო, მოცარელა, ბეგქონდარა",
+    },
+    en: {
+      name: "Mushroom",
+      mood: "A deeper flavor",
+      ingredients: "Cremini, oyster mushrooms, mozzarella, thyme",
+    },
+  },
+  {
+    id: "spicy",
+    color: "#bf2a18",
+    ge: {
+      name: "ცხარე",
+      mood: "მზად ხარ?",
+      ingredients: "სალამი, წითელი ჩილი, შემწვარი წიწაკა, მოცარელა",
+    },
+    en: {
+      name: "Spicy",
+      mood: "Ready for it?",
+      ingredients: "Salami, red chili, roasted peppers, mozzarella",
+    },
+  },
+  {
+    id: "veggie",
+    color: "#4d7052",
+    ge: {
+      name: "ბოსტნეული",
+      mood: "ყველა ფერი ერთად",
+      ingredients: "წიწაკა, ყაბაყი, ხახვი, ზეთისხილი, ჩერი, ბაზილიკი, მოცარელა",
+    },
+    en: {
+      name: "Veggie",
+      mood: "All the colors",
+      ingredients:
+        "Peppers, zucchini, onion, olives, cherry tomatoes, basil, mozzarella",
+    },
+  },
+];
