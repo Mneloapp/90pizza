@@ -144,7 +144,7 @@
   position: relative;
 }
 .dt-stage {
-  color: var(--dt-scene-ink, #171916);
+  color: var(--dt-scene-ink, #ffffff);
   position: sticky;
   top: 0;
   height: 100svh;
@@ -751,11 +751,19 @@
     font-size: 24px;
   }
 }
+@media (min-width: 768px) and (max-width: 1023px) and (min-height: 541px) {
+  .dt-story-copy:not(.dt-hero-copy) {
+    max-width: calc(100% - 80px);
+  }
+  .dt-story-copy > p {
+    max-width: 600px;
+  }
+}
 @media (max-width: 767px) {
   .dt-scene-fallback,
   .dt-loading-scene {
     object-fit: contain;
-    background: #d7d7d2;
+    background: #242622;
   }
   .dt-header {
     height: 62px;

@@ -1,23 +1,25 @@
-# 90pizza: The 90-degree detour
+# 90pizza: From Flour to Your Door
 
-An original product-led brand prototype. The flour-to-pizza opening is restored
-inside the new architectural studio. The accepted flavor selection, delivery
-section and footer are retained. The old oven, cheese-web and packaging sequence
-is not mounted by this route.
+The approved six-act making story, rendered as an interactive Three.js prototype.
+The accepted flavor selection, delivery section, footer and selection dialog are
+retained. Hands, the oven environment and the single-slice lift are new builders;
+the box uses the previously supplied print artwork.
 
 ## Story
 
-1. Flour: an opening burst gathers into a ball of dough on the work surface.
-2. Dough: the same mesh is rolled into a thin square base.
-3. Tomato: a spoon spreads sauce while leaving the crust uncovered.
-4. Mozzarella: instanced shreds settle into a generous cheese layer.
-5. Pepperoni: cupped toppings arrive above the cheese.
-6. The first bite: the assembled pizza bakes and transitions into the Blender model.
-7. Your corner: nine independent meshes separate, leading to the six-flavor menu.
+1. Flour: the opening burst settles onto a dark work surface; water joins it.
+2. Dough: two hands gather and press the same dough into a thin square base.
+3. Ingredients: a spoon spreads tomato, generous mozzarella settles, then pepperoni.
+4. Oven: the environment changes to a warm stone chamber; the cheese bubbles and
+   the pizza browns before returning to the work surface.
+5. First bite: four cuts form nine squares. Only one corner rises on a spatula;
+   three short cheese strands stretch, thin and release.
+6. To you: the pizza settles into the branded box and the lid closes, followed by
+   the slogan and a menu CTA.
 
 All preparation stages share one camera, origin, renderer and scroll timeline.
 The flour sampler and dough deformation share the same shape function, and the
-final model uses a complementary dither dissolve rather than a canvas remount.
+final model uses a short alpha handoff rather than a canvas remount.
 The camera's work-area bounds continuously interpolate into the baked model's
 bounds. The opening can be replayed or paused; scrolling can skip ahead without
 waiting for an intro overlay. Reduced motion starts with formed dough.
@@ -33,9 +35,12 @@ marked as unavailable until launch. Georgian is the initial language.
 - `pepperoni.jpg`, `crumb.jpg`: source textures for Blender.
 - `../../public/models/detour-pizza.glb`: nine meshes with Draco compression.
 - `../../components/detour/`: scoped application, translations, camera and CSS.
+- `making-hands.ts`, `making-oven.ts`, `making-bite.ts`: procedural scene builders
+  within that component directory. Hands are stylized CGI, not photographic footage.
 - `../../components/pizza-{flour,dough,preparation,toppings}.ts`: shared preparation builders.
 - `../../scripts/verify-assembly.cjs`: timeline order, bounds and continuity tests.
 - `../../scripts/verify-detour.cjs`: browser and canvas regression suite.
+- `../../scripts/render-story-fallbacks.cjs`: scene-only desktop/mobile stills.
 
 Build the model with Blender 5.2:
 
@@ -77,9 +82,9 @@ Individual topping briefs and output files:
 
 Menu assets are in `public/images/detour/`. `hero.webp` is a Cycles render of the
 new Blender scene, not a generated video or a reused image from the old page.
-`dough.webp` is a still captured from the live Three.js preparation scene, used
-for the opening fallback. It is 25 kB; no additional generation credits were used
-to restore the preparation sequence.
+`story-0.webp` through `story-5.webp` and their `-mobile` counterparts are captured
+from the live scene with HTML overlays hidden. They provide matching fallback
+frames for all six acts. No additional generation credits were used for this story.
 
 Original generation files (under the thread's `.codex/generated_images` folder):
 
@@ -110,8 +115,9 @@ no-reload English switching, 3D model loading, nine meshes, nonblank canvas
 pixels, visual changes, projected product/copy intersections, all six flavor
 images, dialog keyboard focus and Escape, mobile navigation, reduced motion,
 Save-Data, WebGL failure, network errors and broken images. The suite also checks
-flour replay/pause, gathering, ingredient order, seven chapters and baking
-continuity. Set `QA_OUT` to choose the screenshot/report directory.
+flour replay/pause, gathering, ingredient order, all six acts, oven visibility,
+exactly one raised slice, cheese release/reverse scrolling, box branding/lid
+closure and every fallback chapter. Set `QA_OUT` to choose the report directory.
 
 Physical-device GPU performance still depends on device/thermal conditions;
 browser emulation is not a substitute for every real handset.

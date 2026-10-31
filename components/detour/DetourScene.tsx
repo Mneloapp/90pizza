@@ -9,6 +9,10 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { assemblyAt, mix, scenePose, smooth } from "./scene-math";
 import { buildPreparation } from "../pizza-preparation";
 import { buildFlour } from "../pizza-flour";
+import { buildBox } from "../pizza-packaging";
+import { buildHands, buildWater } from "./making-hands";
+import { buildMakingOven } from "./making-oven";
+import { buildFirstBite } from "./making-bite";
 
 type Props = {
   progress: RefObject<number>;
@@ -18,6 +22,7 @@ type Props = {
   reduced: boolean;
   label: string;
   fallbackSrc: string;
+  fallbackMobileSrc: string;
 };
 
 function disposeTree(root: THREE.Object3D) {
@@ -60,7 +65,7 @@ export default function DetourScene(props: Props) {
     const showFallback = () => {
       failed = true;
       element.dataset.state = "fallback";
-      element.parentElement?.style.removeProperty("--dt-scene-ink");
+      element.parentElement?.style.setProperty("--dt-scene-ink", "#ffffff");
     };
     let renderer: THREE.WebGLRenderer;
     try {
@@ -115,18 +120,9 @@ export default function DetourScene(props: Props) {
     fill.position.set(4, 2, -4);
     scene.add(fill);
 
-    const red = new THREE.MeshStandardMaterial({
-      color: "#b4070d",
-      roughness: 0.6,
-    });
     const floor = new THREE.MeshStandardMaterial({
-      color: "#e4e4df",
+      color: "#292c29",
       roughness: 0.9,
-    });
-    const steel = new THREE.MeshStandardMaterial({
-      color: "#c6c9c7",
-      roughness: 0.32,
-      metalness: 0.75,
     });
     function block(
       w: number,
@@ -148,11 +144,7 @@ export default function DetourScene(props: Props) {
       scene.add(mesh);
       return mesh;
     }
-    block(50, 0.12, 50, 0, -0.62, 0, floor);
-    block(3.45, 0.1, 7, 0, -0.49, 1.9, red);
-    block(8, 0.1, 3.45, 2.275, -0.49, 7.125, red);
-    const plinth = block(3.35, 0.36, 3.35, 0, -0.25, 0, red);
-    const plate = block(3.16, 0.045, 3.16, 0, -0.035, 0, steel, 0.015);
+    const worktable = block(50, 0.12, 50, 0, -0.075, 0, floor);
     const product = new THREE.Group();
     scene.add(product);
     const resources: { dispose(): void }[] = [];
@@ -161,6 +153,17 @@ export default function DetourScene(props: Props) {
       return resource;
     };
     let assetVersion = 0;
+    const surface = keep(
+      new THREE.TextureLoader().load(
+        "/images/materials/oven-stone.webp",
+        () => assetVersion++,
+      ),
+    );
+    surface.colorSpace = THREE.SRGBColorSpace;
+    surface.wrapS = surface.wrapT = THREE.RepeatWrapping;
+    surface.repeat.set(12, 12);
+    floor.bumpMap = surface;
+    floor.bumpScale = 0.008;
     const preparation = buildPreparation({ keep }, () => {
       assetVersion++;
     });
@@ -173,6 +176,17 @@ export default function DetourScene(props: Props) {
     flourRoot.position.y = 0.032;
     flourRoot.add(flour.group, flour.curtain);
     scene.add(flourRoot);
+    const hands = buildHands({ keep });
+    scene.add(hands.group);
+    const water = buildWater({ keep });
+    scene.add(water.group);
+    const oven = buildMakingOven({ keep }, () => assetVersion++);
+    scene.add(oven.group);
+    const bite = buildFirstBite({ keep });
+    scene.add(bite.group);
+    const packaging = buildBox({ keep }, () => assetVersion++);
+    packaging.group.scale.setScalar(0.83);
+    scene.add(packaging.group);
     const handoff = { value: 0 };
     const dissolved = new Set<THREE.Material>();
     function dissolve(material: THREE.Material, incoming: boolean) {
@@ -186,7 +200,7 @@ export default function DetourScene(props: Props) {
         shader.fragmentShader =
           `uniform float assemblyBlend;\n${shader.fragmentShader}`.replace(
             "#include <alphatest_fragment>",
-            `#include <alphatest_fragment>\nfloat grain = fract(sin(dot(floor(gl_FragCoord.xy), vec2(12.9898,78.233))) * 43758.5453);\nif (${incoming ? "grain > assemblyBlend" : "grain <= assemblyBlend"}) discard;`,
+            `#include <alphatest_fragment>\ndiffuseColor.a *= ${incoming ? "assemblyBlend" : "1.0 - assemblyBlend"};`,
           );
       };
       material.customProgramCacheKey = () => `${key}/assembly-${incoming}`;
@@ -199,7 +213,11 @@ export default function DetourScene(props: Props) {
           : [object.material]
         ).forEach((m) => dissolve(m, false));
     });
-    const slices: { object: THREE.Object3D; base: THREE.Vector3 }[] = [];
+    const slices: {
+      object: THREE.Object3D;
+      base: THREE.Vector3;
+      rest: THREE.Quaternion;
+    }[] = [];
     const draco = new DRACOLoader()
       .setDecoderPath("/draco/")
       .setDecoderConfig({ type: "wasm" })
@@ -215,8 +233,13 @@ export default function DetourScene(props: Props) {
         product.add(gltf.scene);
         gltf.scene.traverse((object) => {
           if (/^Slice_\d+$/.test(object.name))
-            slices.push({ object, base: object.position.clone() });
+            slices.push({
+              object,
+              base: object.position.clone(),
+              rest: object.quaternion.clone(),
+            });
           if (object instanceof THREE.Mesh) {
+            object.renderOrder = 1;
             object.castShadow = true;
             object.receiveShadow = true;
             const mats = Array.isArray(object.material)
@@ -299,8 +322,9 @@ export default function DetourScene(props: Props) {
     const bakedBox = new THREE.Box3();
     const rotationMatrix = new THREE.Matrix4();
     const dark = new THREE.Color("#111111");
-    const light = new THREE.Color("#f4f4f2");
-    const groundColor = new THREE.Color("#e4e4df");
+    const light = new THREE.Color("#242622");
+    const groundColor = new THREE.Color("#303130");
+    const ovenColor = new THREE.Color("#140c08");
     const corners = Array.from({ length: 8 }, () => new THREE.Vector3());
     function projectedBounds() {
       let left = Infinity,
@@ -325,7 +349,11 @@ export default function DetourScene(props: Props) {
       return { left, right, top, bottom };
     }
     // Fit the actual transformed model into a copy-safe screen region, not a fixed zoom.
-    function frameProduct(blend: number, introZoom: number) {
+    function frameProduct(
+      blend: number,
+      introZoom: number,
+      assembly: ReturnType<typeof assemblyAt>,
+    ) {
       const entrance = smooth((renderedProgress - 0.13) / 0.12);
       let region: number[];
       if (width < 768)
@@ -359,6 +387,17 @@ export default function DetourScene(props: Props) {
           box.max.lerp(bakedBox.max, blend);
         }
       } else box.setFromObject(product);
+      if (assembly.box > 0) {
+        bakedBox.min.set(-1.75, -0.1, -1.85);
+        bakedBox.max.set(
+          1.75,
+          0.5 + Math.sin((1 - assembly.lid) * 1.65) * 3.34,
+          1.85,
+        );
+        bakedBox.applyMatrix4(rotationMatrix.makeRotationY(product.rotation.y));
+        box.min.lerp(bakedBox.min, assembly.box);
+        box.max.lerp(bakedBox.max, assembly.box);
+      }
       camera.clearViewOffset();
       camera.updateMatrixWorld();
       for (let i = 0; i < 3; i++) {
@@ -432,6 +471,14 @@ export default function DetourScene(props: Props) {
       const assembly = assemblyAt(renderedProgress, introElapsed);
       const pose = scenePose(assembly.orbit, camera.aspect);
       const blend = slices.length ? assembly.handoff : 0;
+      const blending = blend > 0.0001 && blend < 0.9999;
+      dissolved.forEach((material) => {
+        if (material.transparent !== blending) {
+          material.transparent = blending;
+          material.depthWrite = !blending;
+          material.needsUpdate = true;
+        }
+      });
       handoff.value = blend;
       preparation.group.visible = blend < 1;
       if (preparation.group.visible)
@@ -441,9 +488,13 @@ export default function DetourScene(props: Props) {
           assembly.bake,
           assembly.formation,
         );
+      preparation.pin.visible = false;
+      hands.update(assembly.time, assembly.form, assembly.hands);
+      water.update(assembly.time, assembly.water);
+      oven.update(assembly.oven, assembly.bake, elapsed);
       flour.update(
         assembly.time,
-        renderedProgress < 0.28,
+        renderedProgress < 0.34,
         reduced,
         renderer.getPixelRatio(),
         height,
@@ -451,13 +502,16 @@ export default function DetourScene(props: Props) {
       );
       product.visible = blend > 0;
       const daylight = smooth((assembly.time - 4.65) / 1.25);
-      (scene.background as THREE.Color).copy(dark).lerp(light, daylight);
+      (scene.background as THREE.Color)
+        .copy(dark)
+        .lerp(light, daylight)
+        .lerp(ovenColor, assembly.oven);
       (scene.fog as THREE.Fog).color.copy(scene.background as THREE.Color);
       floor.color.copy(dark).lerp(groundColor, daylight);
-      element.parentElement?.style.setProperty(
-        "--dt-scene-ink",
-        daylight > 0.5 ? "#171916" : "#ffffff",
-      );
+      element.parentElement?.style.setProperty("--dt-scene-ink", "#ffffff");
+      worktable.visible = assembly.oven < 0.98;
+      key.intensity = 2 * (1 - assembly.oven * 0.65);
+      fill.intensity = 0.5 * (1 - assembly.oven * 0.8);
       const parallax = reduced || paused ? 0 : 0.13;
       camera.position.set(
         pose.position[0] + pointer.x * parallax,
@@ -470,24 +524,51 @@ export default function DetourScene(props: Props) {
         rotation + (!reduced && !paused ? Math.sin(elapsed * 0.28) * 0.035 : 0);
       preparation.group.rotation.y = product.rotation.y;
       flourRoot.rotation.y = product.rotation.y;
-      slices.forEach(({ object, base }) => {
+      hands.group.rotation.y = product.rotation.y;
+      water.group.rotation.y = product.rotation.y;
+      product.position.y =
+        assembly.box * 0.032 + Math.sin(assembly.box * Math.PI) * 0.48;
+      bite.group.rotation.y = product.rotation.y;
+      bite.group.position.y = product.position.y;
+      slices.forEach(({ object, base, rest }) => {
         object.position.copy(base);
-        object.position.x += base.x * assembly.split * 0.34;
-        object.position.z += base.z * assembly.split * 0.34;
-        object.position.y +=
-          assembly.split *
-          (0.12 + (Math.abs(base.x) + Math.abs(base.z)) * 0.065);
+        object.quaternion.copy(rest);
+        object.position.x += base.x * assembly.cut * 0.008;
+        object.position.z += base.z * assembly.cut * 0.008;
+        if (base.x < -0.5 && base.z > 0.5) {
+          object.position.x -= assembly.lift * 0.3;
+          object.position.z += assembly.lift * 0.32;
+          object.position.y += assembly.lift * 0.65;
+          object.rotateZ(assembly.lift * 0.12);
+          object.rotateX(assembly.lift * 0.04);
+        }
       });
-      plinth.scale.setScalar(1 + assembly.split * 0.2);
-      plate.scale.set(1 + assembly.split * 0.25, 1, 1 + assembly.split * 0.25);
+      bite.update(slices, assembly.cut, assembly.lift, assembly.release);
+      packaging.group.visible = renderedProgress > 0.915;
+      packaging.group.position.set((1 - assembly.box) * 4.6, 0.08, 0);
+      packaging.group.rotation.y = product.rotation.y;
+      packaging.hinge.rotation.x = -(1 - assembly.lid) * 1.65;
       frameProduct(
         blend,
         reduced ? 1 : mix(1.9, 1, smooth((assembly.time - 2) / 3.2)),
+        assembly,
       );
       renderer.render(scene, camera);
       if (element.dataset.state === "loading") element.dataset.state = "ready";
       element.dataset.progress = renderedProgress.toFixed(3);
-      element.dataset.split = assembly.split.toFixed(3);
+      element.dataset.lift = assembly.lift.toFixed(3);
+      element.dataset.cut = assembly.cut.toFixed(3);
+      element.dataset.cheese = String(bite.active);
+      element.dataset.raised = String(
+        slices.filter(({ object, base }) => object.position.y - base.y > 0.05)
+          .length,
+      );
+      element.dataset.hands = String(hands.group.visible);
+      element.dataset.water = String(water.group.visible);
+      element.dataset.oven = assembly.oven.toFixed(3);
+      element.dataset.box = assembly.box.toFixed(3);
+      element.dataset.lid = assembly.lid.toFixed(3);
+      element.dataset.branding = String(packaging.loaded.size);
       element.dataset.intro = assembly.time.toFixed(3);
       element.dataset.formation = assembly.formation.toFixed(3);
       element.dataset.form = assembly.form.toFixed(3);
@@ -510,7 +591,15 @@ export default function DetourScene(props: Props) {
       window.removeEventListener("blur", resetPointer);
       renderer.domElement.removeEventListener("webglcontextlost", onLoss);
       draco.dispose();
-      scene.remove(preparation.group, flourRoot);
+      scene.remove(
+        preparation.group,
+        flourRoot,
+        hands.group,
+        water.group,
+        oven.group,
+        bite.group,
+        packaging.group,
+      );
       resources.forEach((resource) => resource.dispose());
       key.shadow.dispose();
       disposeTree(scene);
@@ -530,14 +619,17 @@ export default function DetourScene(props: Props) {
       data-state="loading"
     >
       {/* Rendered stills keep the opening legible when WebGL is unavailable. */}
-      <img
-        className="dt-scene-fallback"
-        src={props.fallbackSrc}
-        alt=""
-        width="1500"
-        height="1000"
-        fetchPriority="high"
-      />
+      <picture>
+        <source media="(max-width: 767px)" srcSet={props.fallbackMobileSrc} />
+        <img
+          className="dt-scene-fallback"
+          src={props.fallbackSrc}
+          alt=""
+          width="1500"
+          height="1000"
+          fetchPriority="high"
+        />
+      </picture>
     </div>
   );
 }

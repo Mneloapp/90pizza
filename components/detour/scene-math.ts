@@ -5,68 +5,68 @@ export const smooth = (n: number) => {
   return t * t * (3 - 2 * t);
 };
 export const mix = (a: number, b: number, t: number) => a + (b - a) * t;
-export const chapterStops = [0, 0.12, 0.28, 0.4, 0.49, 0.58, 0.8, 1] as const;
-export const chapterTargets = [
-  0, 0.21, 0.35, 0.455, 0.545, 0.73, 0.93,
-] as const;
+export const chapterStops = [0, 0.14, 0.34, 0.61, 0.78, 0.91, 1] as const;
+export const chapterTargets = [0, 0.245, 0.48, 0.705, 0.86, 0.997] as const;
 export function chapterFor(p: number) {
   for (let i = chapterStops.length - 2; i >= 0; i--)
     if (clamp(p) >= chapterStops[i]) return i;
   return 0;
 }
 
+// The approved six-act story has one reversible timeline; only the flour opening uses time.
 export function assemblyAt(p: number, elapsed: number) {
-  const time = Math.max(elapsed, smooth(p / 0.12) * 6);
+  const time = Math.max(clamp(elapsed, 0, 6), smooth(p / 0.14) * 6);
   const topping =
-    p < 0.4
-      ? mix(0, 0.43, clamp((p - 0.28) / 0.12))
-      : p < 0.49
-        ? mix(0.43, 0.75, clamp((p - 0.4) / 0.09))
-        : mix(0.75, 1, clamp((p - 0.49) / 0.09));
+    p < 0.43
+      ? mix(0, 0.43, clamp((p - 0.34) / 0.09))
+      : p < 0.53
+        ? mix(0.43, 0.75, clamp((p - 0.43) / 0.1))
+        : mix(0.75, 1, clamp((p - 0.53) / 0.08));
+  const oven = smooth((p - 0.61) / 0.035) * (1 - smooth((p - 0.75) / 0.03));
+  const lift = smooth((p - 0.815) / 0.055) * (1 - smooth((p - 0.9) / 0.025));
   return {
     time,
     formation: smooth((time - 2.05) / 2.6),
-    form: smooth((p - 0.12) / 0.16),
+    water: smooth((time - 1.45) / 0.35) * (1 - smooth((time - 2.6) / 0.5)),
+    form: smooth((p - 0.14) / 0.2),
     topping,
-    bake: smooth((p - 0.58) / 0.1),
-    handoff: smooth((p - 0.65) / 0.06),
-    split: smooth((p - 0.8) / 0.09),
+    hands: smooth((time - 2) / 0.5) * (1 - smooth((p - 0.31) / 0.03)),
+    bake: smooth((p - 0.645) / 0.075),
+    handoff: smooth((p - 0.69) / 0.035),
+    oven,
+    cut: smooth((p - 0.78) / 0.035),
+    lift,
+    release: smooth((p - 0.87) / 0.018),
+    box: smooth((p - 0.915) / 0.035),
+    lid: smooth((p - 0.96) / 0.037),
     orbit:
-      p < 0.58
-        ? mix(0.1, 0.66, smooth((p - 0.12) / 0.3))
-        : p < 0.72
-          ? mix(0.66, 0.33, smooth((p - 0.58) / 0.14))
-          : mix(0.33, 0.66, smooth((p - 0.72) / 0.18)),
+      p < 0.61
+        ? mix(0.12, 0.67, smooth((p - 0.14) / 0.25))
+        : p < 0.78
+          ? mix(0.67, 0.32, smooth((p - 0.61) / 0.045))
+          : mix(0.32, 0.48, smooth((p - 0.91) / 0.08)),
   };
 }
 
-// All camera targets keep the product below the copy, including narrow phones.
 export function scenePose(progress: number, aspect: number) {
   const mobile = aspect < 0.9;
-  const p = clamp(progress) * 3;
-  const segment = Math.min(2, Math.floor(p));
-  const t = smooth(p - segment);
-  const lift = aspect > 0.53 ? 0.65 : 1.6;
+  const p = clamp(progress) * 3,
+    segment = Math.min(2, Math.floor(p)),
+    t = smooth(p - segment);
   const views = mobile
     ? [
-        [5.55, 8.7, 10.05, 0, lift, 0],
-        [0.4, 5.8, 11, 0, lift, 0],
-        [0.1, 13, 4.5, 0, lift, 0],
-        [-5.55, 8.7, 10.05, 0, lift, 0],
+        [4, 9, 10],
+        [0.2, 6, 11],
+        [0, 13, 4.5],
+        [-4, 9, 10],
       ]
     : [
-        [3.5, 5, 6.3, 0, 1.15, 0],
-        [0.2, 3.8, 6.8, -1.1, 0.7, 0],
-        [0, 9.4, 3.5, -1.25, 0.9, 0],
-        [-3.5, 5.5, 7, -1.1, 0.9, 0],
+        [3.5, 6, 6.3],
+        [0.2, 4.4, 7],
+        [0, 9.4, 3.5],
+        [-3.5, 6, 7],
       ];
-  const pose = views[segment].map((v, i) => mix(v, views[segment + 1][i], t));
-  if (aspect > 1.9) {
-    pose[3] = -2.1;
-    pose[4] = 0.15;
-  }
-  // Open the grid only in the sharing chapter; reassemble before the flavor choice.
-  const split =
-    smooth((progress - 0.43) / 0.12) * (1 - smooth((progress - 0.77) / 0.13));
-  return { position: pose.slice(0, 3), target: pose.slice(3), split };
+  return {
+    position: views[segment].map((v, i) => mix(v, views[segment + 1][i], t)),
+  };
 }

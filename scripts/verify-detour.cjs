@@ -10,16 +10,28 @@ const quick = process.env.QA_QUICK === "1";
 const errors = [];
 const results = [];
 const stages = [
-  [1, 0.22],
-  [2, 0.35],
-  [3, 0.455],
-  [4, 0.55],
-  [5, 0.73],
-  [6, 0.93],
+  [1, 0.245],
+  [2, 0.39],
+  [2, 0.48],
+  [2, 0.58],
+  [3, 0.73],
+  [4, 0.86],
+  [5, 0.997],
 ];
 
 async function shot(page, name) {
   await page.screenshot({ path: path.join(out, `${name}.png`) });
+}
+
+async function settled(page, progress) {
+  await page.waitForFunction(
+    (p) =>
+      Math.abs(
+        Number(document.querySelector(".dt-canvas").dataset.progress) - p,
+      ) < 0.0012,
+    progress,
+    { timeout: 15000 },
+  );
 }
 
 async function canvasCheck(page, name) {
@@ -56,8 +68,20 @@ async function canvasCheck(page, name) {
       framing.b.bottom < framing.height - 45,
     `${name}: clipped product`,
   );
-  const buffer = await page.locator(".dt-canvas canvas").screenshot();
-  const { data, info } = await sharp(buffer)
+  const buffer = await page.locator(".dt-canvas canvas").screenshot({
+    style:
+      ".dt-header, .dt-stage > :not(.dt-canvas) { visibility: hidden !important; }",
+  });
+  const left = Math.max(0, Math.floor(framing.b.left));
+  const top = Math.max(0, Math.floor(framing.b.top));
+  const crop = sharp(buffer).extract({
+    left,
+    top,
+    width: Math.min(framing.width - left, Math.ceil(framing.b.right) - left),
+    height: Math.min(framing.height - top, Math.ceil(framing.b.bottom) - top),
+  });
+  const { data, info } = await crop
+    .clone()
     .resize(160, 100)
     .removeAlpha()
     .raw()
@@ -71,13 +95,15 @@ async function canvasCheck(page, name) {
     )
       colorful++;
   const phase = await page.locator(".dt-canvas").getAttribute("data-product");
-  const stats = await sharp(buffer).stats();
+  const closedBox =
+    Number(await page.locator(".dt-canvas").getAttribute("data-lid")) > 0.5;
+  const stats = await crop.clone().stats();
   assert(
     stats.channels.slice(0, 3).every((c) => c.stdev > 12),
     `${name}: uniform canvas`,
   );
   assert(
-    colorful > (phase === "preparation" ? 150 : 250),
+    colorful > (closedBox ? 120 : phase === "preparation" ? 150 : 250),
     `${name}: blank or untextured canvas (${colorful})`,
   );
   return { buffer, colorful };
@@ -246,6 +272,7 @@ async function check(browserType, name, viewport, options = {}) {
         p,
       );
       await page.waitForTimeout(900);
+      await settled(page, p);
       await canvasCheck(page, `${name}-english-sweep-${p}`);
     }
     await shot(page, `${name}-english`);
@@ -271,6 +298,7 @@ async function check(browserType, name, viewport, options = {}) {
       p,
     );
     await page.waitForTimeout(1000);
+    await settled(page, p);
     assert.equal(
       await page.locator(".dt-stage").getAttribute("data-chapter"),
       String(stage),
@@ -284,29 +312,65 @@ async function check(browserType, name, viewport, options = {}) {
         Number(state.form) > 0.4 && Number(state.topping) === 0,
         "Dough must precede toppings",
       );
-    if (stage === 2)
+    if (p === 0.39)
       assert(
         Number(state.topping) > 0.1 && Number(state.topping) < 0.44,
         "Sauce stage",
       );
-    if (stage === 3)
+    if (p === 0.48)
       assert(
         Number(state.topping) > 0.44 && Number(state.topping) < 0.75,
         "Cheese stage",
       );
-    if (stage === 4)
+    if (p === 0.58)
       assert(
         Number(state.topping) > 0.75 && Number(state.bake) === 0,
         "Pepperoni precedes baking",
       );
-    if (stage >= 5) assert.equal(state.product, "baked");
-    if (stage === 6)
-      assert(
-        Number(await page.locator(".dt-canvas").getAttribute("data-split")) >
-          0.9,
-        "Nine slices not separated",
-      );
-    await shot(page, `${name}-chapter-${stage}`);
+    if (stage >= 3) assert.equal(state.product, "baked");
+    if (stage === 1) assert.equal(state.hands, "true");
+    if (stage === 3)
+      assert(Number(state.oven) > 0.99, "Oven environment missing");
+    if (stage === 4) {
+      assert.equal(state.raised, "1", "Exactly one slice must lift");
+      assert.equal(state.cheese, "3", "Three short cheese strands expected");
+      assert(Number(state.lift) > 0.9);
+    }
+    if (stage === 5) {
+      assert(Number(state.lid) > 0.99, "Box lid not closed");
+      assert.equal(state.branding, "5", "Box print panels missing");
+      assert.equal(state.raised, "0");
+    }
+    await shot(page, `${name}-chapter-${stage}-${p}`);
+  }
+  for (const [p, raised, cheese] of [
+    [0.89, "1", "0"],
+    [0.86, "1", "3"],
+    [0.8, "0", "0"],
+  ]) {
+    await page.evaluate(
+      (p) =>
+        scrollTo({
+          top:
+            (document.querySelector(".dt-story").offsetHeight - innerHeight) *
+            p,
+          behavior: "instant",
+        }),
+      p,
+    );
+    await page.waitForTimeout(1000);
+    await settled(page, p);
+    assert.equal(
+      await page.locator(".dt-canvas").getAttribute("data-raised"),
+      raised,
+      "Reverse slice motion",
+    );
+    assert.equal(
+      await page.locator(".dt-canvas").getAttribute("data-cheese"),
+      cheese,
+      "Cheese release/reverse motion",
+    );
+    await canvasCheck(page, `${name}-reverse-${p}`);
   }
   await page.locator("#flavors").scrollIntoViewIfNeeded();
   const ids = new Set();
@@ -379,6 +443,7 @@ async function check(browserType, name, viewport, options = {}) {
     triangles: await page.locator(".dt-canvas").getAttribute("data-triangles"),
     images: ids.size,
   });
+  console.log(`Passed ${name}`);
   await browser.close();
 }
 
@@ -405,6 +470,30 @@ async function fallback(mode) {
       : ".dt-loading-scene";
   await page.locator(selector).waitFor();
   assert(await page.locator(selector).evaluate((el) => el.naturalWidth > 0));
+  for (const [chapter, p] of [0, 0.245, 0.58, 0.73, 0.86, 0.997].entries()) {
+    await page.evaluate(
+      (p) =>
+        scrollTo({
+          top:
+            (document.querySelector(".dt-story").offsetHeight - innerHeight) *
+            p,
+          behavior: "instant",
+        }),
+      p,
+    );
+    await page.waitForTimeout(500);
+    const fallbackImage = page.locator(selector);
+    await fallbackImage.evaluate((el) => el.decode());
+    assert(
+      (await fallbackImage.evaluate((el) => el.currentSrc)).endsWith(
+        `story-${chapter}-mobile.webp`,
+      ),
+      "Fallback chapter mismatch",
+    );
+    await shot(page, `fallback-${mode}-${chapter}`);
+  }
+  await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+  await page.waitForTimeout(300);
   await page.getByRole("button", { name: "მოვამზადოთ", exact: true }).click();
   await page.waitForTimeout(1200);
   await page.locator(".dt-stage-actions a").click();
@@ -412,6 +501,7 @@ async function fallback(mode) {
   assert(await page.locator(".dt-flavor-row").first().isVisible());
   await shot(page, `fallback-${mode}`);
   results.push({ name: `fallback-${mode}`, passed: true });
+  console.log(`Passed fallback-${mode}`);
   await browser.close();
 }
 

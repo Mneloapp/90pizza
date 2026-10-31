@@ -74,8 +74,8 @@ export default function DetourExperience() {
   const reduced = useReducedMotion();
   const t = copy[language];
   const flavor = flavors[selected];
-  const fallbackSrc =
-    chapter < 5 ? "/images/detour/dough.webp" : "/images/detour/hero.webp";
+  const fallbackSrc = `/images/detour/story-${chapter}.webp`;
+  const fallbackMobileSrc = `/images/detour/story-${chapter}-mobile.webp`;
 
   useEffect(() => {
     const previous = document.documentElement.lang;
@@ -210,13 +210,16 @@ export default function DetourExperience() {
             {dataSaver === null ? (
               <div className="dt-scene-loading" aria-hidden="true" />
             ) : dataSaver ? (
-              <img
-                className="dt-loading-scene"
-                src={fallbackSrc}
-                width="1500"
-                height="1000"
-                alt={t.scene}
-              />
+              <picture>
+                <source media="(max-width: 767px)" srcSet={fallbackMobileSrc} />
+                <img
+                  className="dt-loading-scene"
+                  src={fallbackSrc}
+                  width="1500"
+                  height="1000"
+                  alt={t.scene}
+                />
+              </picture>
             ) : (
               <Scene
                 progress={progress}
@@ -225,6 +228,7 @@ export default function DetourExperience() {
                 paused={paused}
                 reduced={Boolean(reduced)}
                 fallbackSrc={fallbackSrc}
+                fallbackMobileSrc={fallbackMobileSrc}
                 label={t.scene}
               />
             )}
@@ -270,7 +274,7 @@ export default function DetourExperience() {
                 </button>
               ) : (
                 <a href="#flavors" className="dt-primary">
-                  {t.explore}
+                  {chapter === 5 ? t.viewMenu : t.explore}
                   <ArrowUpRight size={20} />
                 </a>
               )}
