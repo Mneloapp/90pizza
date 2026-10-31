@@ -46,6 +46,11 @@ export default function MakingWorld({
     "#111111",
     "#e01010",
   ]);
+  const ovenCut = useTransform(
+    scrollYProgress,
+    [0.493, 0.511, 0.53, 0.642, 0.66, 0.678],
+    [0, 1, 0, 0, 1, 0],
+  );
   // Crossfading black and white text makes it disappear at a mid-gray background.
   const color = useTransform(backgroundColor, (background) => {
     const channels = background.startsWith("#")
@@ -129,6 +134,11 @@ export default function MakingWorld({
           onReady={setReady}
           onIntroReady={setIntroReady}
           onInteract={lift}
+        />
+        <motion.div
+          className="xp-oven-cut"
+          style={{ opacity: reduced ? 0 : ovenCut }}
+          aria-hidden="true"
         />
         <div
           className="xp-opening"

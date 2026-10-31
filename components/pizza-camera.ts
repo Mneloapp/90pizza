@@ -2,6 +2,22 @@ import { MathUtils } from "three";
 
 const { smoothstep: smooth, lerp } = MathUtils;
 
+export function ovenFraming(width: number, height: number, local: number) {
+  const portrait = width / height < 1.1;
+  const push = 1 - smooth(local, 0.2, 0.8) * 0.025;
+  return {
+    position: (portrait ? [0.4, 8, 14] : [3.5, 3.6, 7.8]).map(
+      (v) => v * push,
+    ) as [number, number, number],
+    target: (portrait ? [0, 1.8, -0.3] : [-1.6, 0.4, -0.3]) as [
+      number,
+      number,
+      number,
+    ],
+    travel: 1.4 * (1 - smooth(local, 0.06, 0.3)),
+  };
+}
+
 // The canvas never changes size between chapters. This continuous virtual frame
 // moves the product around the copy without cutting to another camera or viewport.
 export function sceneFraming(progress: number, width: number, height: number) {

@@ -4,11 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import type { MotionValue } from "framer-motion";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { buildBox, buildCheese, buildPizza } from "./pizza-model";
-import { buildPreparation, buildOven } from "./pizza-preparation";
+import { buildPizza } from "./pizza-model";
+import { buildBox, boxPose } from "./pizza-packaging";
+import { buildCheese } from "./pizza-cheese";
+import { buildPreparation } from "./pizza-preparation";
+import { buildOven } from "./pizza-oven";
+import { toppingState } from "./pizza-toppings";
 import { storyAt } from "./pizza-story";
 import { buildFlour } from "./pizza-flour";
-import { sceneFraming } from "./pizza-camera";
+import { sceneFraming, ovenFraming } from "./pizza-camera";
 import { DOUGH_BASE } from "./pizza-dough";
 
 export type StageState = {
@@ -118,7 +122,7 @@ export default function PizzaStage({
       const world = new THREE.Group();
       world.rotation.y = -0.32;
       scene.add(world);
-      const box = buildBox({ keep });
+      const box = buildBox({ keep }, () => request());
       world.add(box.group);
       const food = new THREE.Group();
       food.position.y = 0.015;
@@ -129,7 +133,7 @@ export default function PizzaStage({
       world.add(flour.group);
       world.add(flour.curtain);
       const oven = buildOven({ keep });
-      world.add(oven.group);
+      scene.add(oven.group);
       const cheese = buildCheese({ keep });
       food.add(cheese.group);
       const floor = new THREE.Mesh(
@@ -184,6 +188,9 @@ export default function PizzaStage({
         const raw = progress.get();
         const step = storyAt(raw);
         const { index, local } = step;
+        const inOven = raw >= 0.511 && raw < 0.66;
+        const ovenFrame = ovenFraming(width, height, local);
+        const packing = boxPose(index === 5 ? local : 0);
         if (current.pour !== lastPour) {
           lastPour = current.pour;
           introElapsed = 0;
@@ -213,17 +220,19 @@ export default function PizzaStage({
           introReady = showIntroCopy;
           inputs.current.onIntroReady(introReady);
         }
-        floor.visible = true;
+        floor.visible = !inOven;
         floor.position.y = THREE.MathUtils.lerp(
           DOUGH_BASE + 0.013,
           -0.42,
           smooth(raw, 0.82, 0.87),
         );
-        scene.environmentIntensity = 0.45 - framing.preparation * 0.2;
-        key.intensity = 1.8 + framing.preparation * 0.6;
+        scene.environmentIntensity = inOven
+          ? 0.15
+          : 0.45 - framing.preparation * 0.2;
+        key.intensity = inOven ? 1.65 : 1.8 + framing.preparation * 0.6;
         key.position.set(-4, 8 - framing.preparation * 3, 5);
-        fill.intensity = 0.5 + framing.preparation * 0.35;
-        const openTarget = index === 5 ? 1 - smooth(local, 0.45, 0.98) : 1;
+        fill.intensity = inOven ? 0.18 : 0.5 + framing.preparation * 0.35;
+        const openTarget = index === 5 ? packing.open : 1;
         const liftTarget = index === 4 && current.lift ? 1 : 0;
         const spreadTarget =
           index === 4 && !current.lift ? smooth(local, 0.02, 0.35) : 0;
@@ -237,38 +246,32 @@ export default function PizzaStage({
           index === 3 ? -0.1 : -0.32 + (current.turn * Math.PI) / 2,
         );
         pointer.lerp(quiet ? center : pointerTarget, 0.07);
-        world.rotation.y = rotation + pointer.x * 0.13;
-        world.rotation.x = pointer.y * 0.035;
-        world.rotation.z = quiet ? 0 : Math.sin(time * 0.00055) * 0.012;
-        world.position.x = framing.x;
-        world.scale.setScalar(framing.scale);
-        world.position.y = framing.y;
+        world.rotation.y = inOven ? 0 : rotation + pointer.x * 0.13;
+        world.rotation.x = inOven ? 0 : pointer.y * 0.035;
+        world.rotation.z =
+          quiet || inOven ? 0 : Math.sin(time * 0.00055) * 0.012;
+        world.position.x = inOven ? 0 : framing.x;
+        world.scale.setScalar(inOven ? 1 : framing.scale);
+        world.position.y = inOven ? 0 : framing.y;
         box.hinge.rotation.x = -opening * 2.05;
-        box.group.position.y = -0.3 * (1 - smooth(local, 0, 0.35));
-        box.group.scale.setScalar(
-          index === 5 ? Math.max(0.001, smooth(local, 0, 0.3)) : 0.001,
-        );
+        box.group.position.y = -3 * (1 - packing.arrival);
         box.group.visible = index === 5;
         food.position.y =
-          index === 5 ? 0.015 + 0.35 * (1 - smooth(local, 0, 0.4)) : 0.015;
-        const entering = smooth(local, 0.05, 0.4),
-          exiting = smooth(local, 0.66, 0.98);
-        food.position.z = index === 3 ? -3.0 * entering * (1 - exiting) : 0;
-        const ovenPresence =
-          smooth(raw, 0.485, 0.535) * (1 - smooth(raw, 0.65, 0.705));
-        oven.group.visible = ovenPresence > 0.001;
-        oven.group.position.z = -8 * (1 - ovenPresence);
-        oven.light.intensity =
-          ovenPresence * (8 + (quiet ? 0 : Math.sin(time * 0.002) * 0.8));
-        const preparing = index < 3 || (index === 3 && local < 0.56);
+          index === 5 ? 0.015 + 0.65 * (1 - packing.landing) : 0.015;
+        food.position.z = inOven ? ovenFrame.travel : 0;
+        oven.group.visible = inOven;
+        oven.light.intensity = inOven
+          ? 18 + (quiet ? 0 : Math.sin(time * 0.002) * 0.5)
+          : 0;
+        const bake = index === 3 ? smooth(local, 0.26, 0.8) : 0;
+        const preparing = raw < 0.66;
         preparation.group.visible = preparing;
         preparation.group.scale.setScalar(1);
         if (preparing)
           preparation.update(
             forming,
             index < 2 ? 0 : index === 2 ? local : 1,
-            time,
-            quiet,
+            bake,
             formation,
           );
         camera.aspect = framing.aspect;
@@ -284,6 +287,12 @@ export default function PizzaStage({
         projection[8] -= 2 * framing.frame.left + framing.frame.width - 1;
         projection[9] -= 1 - 2 * framing.frame.top - framing.frame.height;
         camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+        if (inOven) {
+          camera.aspect = width / height;
+          camera.position.fromArray(ovenFrame.position);
+          camera.lookAt(...ovenFrame.target);
+          camera.updateProjectionMatrix();
+        }
         if (pizza) {
           pizza.group.visible = !preparing;
           pizza.slices.forEach((slice, index) => {
@@ -299,7 +308,7 @@ export default function PizzaStage({
               slice.rotation.x = lifting * 0.12;
             }
           });
-          cheese.update(pizza.slices[6], lifting);
+          cheese.update(pizza.slices, spreading, lifting);
           cheese.group.visible = cheese.group.visible && !preparing;
         }
         renderer.render(scene, camera);
@@ -334,6 +343,13 @@ export default function PizzaStage({
               ? "gather"
               : "settled";
         element.dataset.product = preparing ? "dough" : "pizza";
+        element.dataset.oven = String(inOven);
+        element.dataset.bake = bake.toFixed(3);
+        element.dataset.cheeseBridges = String(cheese.active);
+        element.dataset.boxArt = String(box.loaded.size);
+        element.dataset.cheeseCoverage = toppingState(
+          index < 2 ? 0 : index === 2 ? local : 1,
+        ).cheese.toFixed(3);
         const canRender = loaded || preparing;
         if (element.dataset.ready !== String(canRender)) {
           element.dataset.ready = String(canRender);

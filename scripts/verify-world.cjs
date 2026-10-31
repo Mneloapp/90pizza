@@ -35,7 +35,8 @@ async function seek(page, value) {
 }
 async function canvasPixels(canvas) {
   const buffer = await canvas.screenshot({
-    style: ".xp-header, .xp-wordmark, .xp-opening, .xp-chapter-copy, .xp-recipe-mark, .xp-making-bottom, .xp-scene-controls, .xp-progress { visibility: hidden !important; }",
+    style:
+      ".xp-header, .xp-wordmark, .xp-opening, .xp-chapter-copy, .xp-recipe-mark, .xp-making-bottom, .xp-scene-controls, .xp-progress { visibility: hidden !important; }",
   });
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -325,6 +326,7 @@ async function touch(browser) {
     await flourCheck(chrome, url, output, 1440);
     await flourCheck(chrome, url, output, 390);
     await require("./verify-dough.cjs")(chrome, url, output, 390);
+    await require("./verify-cooking.cjs")(chrome, url, output);
     for (const size of [
       { width: 1440, height: 1000 },
       { width: 390, height: 844 },

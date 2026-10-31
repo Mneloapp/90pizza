@@ -1,0 +1,8 @@
+{
+  "purpose": "Generated albedo maps used on real-time 3D sauce and mozzarella meshes. These are prototype textures, not photographs of a production 90pizza product.",
+  "generator": "OpenAI image generation",
+  "assets": {
+    "tomato-albedo.webp": "Finely crushed San Marzano tomato sauce, overhead, diffuse neutral light, no props or toppings.",
+    "mozzarella-albedo.webp": "Melted low-moisture mozzarella with lightly toasted blisters, overhead, no crust or additional toppings. Blended in as cheese melts inside the oven."
+  }
+}

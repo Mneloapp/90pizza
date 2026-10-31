@@ -501,6 +501,53 @@
 .xp-journey .xp-world-sticky {
   transition: none;
 }
+.xp-oven-cut {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: #111;
+}
+.xp-journey [data-chapter="oven"] .xp-recipe-mark {
+  visibility: hidden;
+}
+.xp-journey [data-chapter="oven"] .xp-chapter-copy {
+  text-shadow: 0 2px 20px #000;
+}
+.xp-journey [data-chapter="oven"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, #080604d9, #08060400 52%);
+}
+@media (max-width: 700px) {
+  .xp-journey [data-chapter="oven"]::after {
+    background: linear-gradient(
+      180deg,
+      #080604f2 0%,
+      #080604d9 26%,
+      #08060400 48%
+    );
+  }
+}
+
+@media (min-width: 701px) and (max-aspect-ratio: 11/10) {
+  .xp-journey [data-chapter="oven"] .xp-chapter-copy {
+    top: 110px;
+    width: calc(100% - 56px);
+    max-width: 450px;
+  }
+  .xp-journey [data-chapter="oven"]::after {
+    background: linear-gradient(
+      180deg,
+      #080604f2,
+      #080604cc 34%,
+      #08060400 55%
+    );
+  }
+}
 
 .xp-journey [data-chapter="hero"] .xp-wordmark,
 .xp-journey [data-chapter="hero"] .xp-opening {

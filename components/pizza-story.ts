@@ -21,5 +21,7 @@ export function storyAt(progress: number) {
 export function storyTarget(index: number) {
   return index === 0
     ? 0
-    : storyStops[index] + (storyStops[index + 1] - storyStops[index]) * 0.55;
+    : storyStops[index] +
+        (storyStops[index + 1] - storyStops[index]) *
+          (index === 5 ? 0.88 : 0.55);
 }
