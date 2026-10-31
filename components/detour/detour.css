@@ -140,10 +140,11 @@
   display: none;
 }
 .dt-story {
-  height: 430svh;
+  height: 720svh;
   position: relative;
 }
 .dt-stage {
+  color: var(--dt-scene-ink, #171916);
   position: sticky;
   top: 0;
   height: 100svh;
@@ -152,7 +153,8 @@
   overflow: hidden;
 }
 .dt-canvas,
-.dt-loading-scene {
+.dt-loading-scene,
+.dt-scene-loading {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -160,6 +162,15 @@
 }
 .dt-canvas {
   z-index: -2;
+  background: #111111;
+}
+.dt-scene-loading {
+  background: #111111;
+  z-index: -2;
+}
+.dt-stage:has(.dt-scene-loading),
+.dt-stage:has(.dt-canvas[data-state="loading"]) {
+  color: #ffffff;
 }
 .dt-canvas canvas {
   width: 100%;
@@ -179,7 +190,8 @@
   object-fit: cover;
   transition: opacity 0.5s;
 }
-.dt-canvas[data-state="ready"] .dt-scene-fallback {
+.dt-canvas[data-state="ready"] .dt-scene-fallback,
+.dt-canvas[data-state="loading"] .dt-scene-fallback {
   opacity: 0;
   pointer-events: none;
 }
@@ -308,10 +320,12 @@
   transform: translateY(-2px);
 }
 .dt-scene-tools {
+  color: #171916;
   display: flex;
   background: #f4f4f2ee;
 }
 .dt-story-rail {
+  color: #171916;
   position: absolute;
   bottom: 0;
   left: 0;
@@ -797,7 +811,7 @@
     font-size: 9px;
   }
   .dt-story {
-    height: 410svh;
+    height: 680svh;
   }
   .dt-stage {
     min-height: 530px;
@@ -882,7 +896,7 @@
     gap: 7px;
   }
   .dt-story-rail nav {
-    gap: 16px;
+    gap: 6px;
   }
   .dt-story-rail button {
     font-size: 10px;
@@ -1044,7 +1058,8 @@
     display: none;
   }
   .dt-story-rail nav {
-    width: 100%;
+    flex: 1;
+    margin-right: 12px;
     justify-content: space-between;
   }
   .dt-primary {

@@ -15,24 +15,17 @@ import {
   Pause,
   Play,
   RotateCw,
+  RotateCcw,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { chapterFor, clamp } from "./scene-math";
+import { chapterFor, chapterTargets, clamp } from "./scene-math";
 import { copy, flavors, type Language } from "./content";
 import "./detour.css";
 
 const Scene = dynamic(() => import("./DetourScene"), {
   ssr: false,
-  loading: () => (
-    <img
-      className="dt-loading-scene"
-      src="/images/detour/hero.webp"
-      width="1500"
-      height="1000"
-      alt=""
-    />
-  ),
+  loading: () => <div className="dt-scene-loading" aria-hidden="true" />,
 });
 
 function LanguageSwitch({
@@ -68,6 +61,7 @@ export default function DetourExperience() {
   const progressLine = useRef<HTMLDivElement>(null);
   const [chapter, setChapter] = useState(0);
   const [turns, setTurns] = useState(0);
+  const [replay, setReplay] = useState(0);
   const [paused, setPaused] = useState(false);
   const [dataSaver, setDataSaver] = useState<boolean | null>(null);
   const [navOpen, setNavOpen] = useState(false);
@@ -80,6 +74,8 @@ export default function DetourExperience() {
   const reduced = useReducedMotion();
   const t = copy[language];
   const flavor = flavors[selected];
+  const fallbackSrc =
+    chapter < 5 ? "/images/detour/dough.webp" : "/images/detour/hero.webp";
 
   useEffect(() => {
     const previous = document.documentElement.lang;
@@ -152,7 +148,7 @@ export default function DetourExperience() {
       top:
         top +
         (story.current.offsetHeight - window.innerHeight) *
-          (index === 0 ? 0 : index / 4 + 0.09),
+          chapterTargets[index],
       behavior: reduced ? "instant" : "smooth",
     });
   };
@@ -211,10 +207,12 @@ export default function DetourExperience() {
       <main id="top">
         <section ref={story} className="dt-story" aria-label={t.story}>
           <div className="dt-stage" data-chapter={chapter}>
-            {dataSaver !== false ? (
+            {dataSaver === null ? (
+              <div className="dt-scene-loading" aria-hidden="true" />
+            ) : dataSaver ? (
               <img
                 className="dt-loading-scene"
-                src="/images/detour/hero.webp"
+                src={fallbackSrc}
                 width="1500"
                 height="1000"
                 alt={t.scene}
@@ -223,8 +221,10 @@ export default function DetourExperience() {
               <Scene
                 progress={progress}
                 turns={turns}
+                replay={replay}
                 paused={paused}
                 reduced={Boolean(reduced)}
+                fallbackSrc={fallbackSrc}
                 label={t.scene}
               />
             )}
@@ -263,19 +263,36 @@ export default function DetourExperience() {
               </motion.div>
             </AnimatePresence>
             <div className="dt-stage-actions">
-              <a href="#flavors" className="dt-primary">
-                {t.explore}
-                <ArrowUpRight size={20} />
-              </a>
+              {chapter === 0 ? (
+                <button className="dt-primary" onClick={() => goToChapter(1)}>
+                  {t.begin}
+                  <ArrowDown size={20} />
+                </button>
+              ) : (
+                <a href="#flavors" className="dt-primary">
+                  {t.explore}
+                  <ArrowUpRight size={20} />
+                </a>
+              )}
               {dataSaver === false && (
                 <div className="dt-scene-tools">
                   <button
                     className="dt-icon"
-                    title={t.rotate}
-                    aria-label={t.rotate}
-                    onClick={() => setTurns((n) => n + 1)}
+                    title={chapter === 0 ? t.replay : t.rotate}
+                    aria-label={chapter === 0 ? t.replay : t.rotate}
+                    onClick={() => {
+                      if (chapter === 0) {
+                        goToChapter(0);
+                        setPaused(false);
+                        setReplay((n) => n + 1);
+                      } else setTurns((n) => n + 1);
+                    }}
                   >
-                    <RotateCw size={19} />
+                    {chapter === 0 ? (
+                      <RotateCcw size={19} />
+                    ) : (
+                      <RotateCw size={19} />
+                    )}
                   </button>
                   <button
                     className="dt-icon"

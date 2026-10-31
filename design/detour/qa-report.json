@@ -3,44 +3,44 @@
   "results": [
     {
       "name": "desktop",
-      "colorful": 4475,
-      "triangles": "159708",
+      "colorful": 1210,
+      "triangles": "159408",
       "images": 6
     },
     {
       "name": "mobile",
-      "colorful": 7179,
-      "triangles": "159708",
+      "colorful": 289,
+      "triangles": "27192",
       "images": 6
     },
     {
       "name": "small",
-      "colorful": 6469,
-      "triangles": "159708",
+      "colorful": 220,
+      "triangles": "27192",
       "images": 6
     },
     {
       "name": "tablet",
-      "colorful": 7877,
+      "colorful": 1249,
       "triangles": "159708",
       "images": 6
     },
     {
       "name": "landscape",
-      "colorful": 3929,
-      "triangles": "159708",
+      "colorful": 1380,
+      "triangles": "159408",
       "images": 6
     },
     {
       "name": "webkit",
-      "colorful": 7181,
-      "triangles": "159708",
+      "colorful": 289,
+      "triangles": "27192",
       "images": 6
     },
     {
       "name": "reduced",
-      "colorful": 7319,
-      "triangles": "159708",
+      "colorful": 286,
+      "triangles": "27192",
       "images": 6
     },
     {

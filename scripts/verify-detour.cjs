@@ -3,11 +3,20 @@ const sharp = require("sharp");
 const fs = require("node:fs/promises");
 const assert = require("node:assert/strict");
 const path = require("node:path");
+require("./verify-assembly.cjs");
 const base = process.env.QA_URL || "http://127.0.0.1:3139";
 const out = process.env.QA_OUT || "/private/tmp/90pizza-detour-qa";
 const quick = process.env.QA_QUICK === "1";
 const errors = [];
 const results = [];
+const stages = [
+  [1, 0.22],
+  [2, 0.35],
+  [3, 0.455],
+  [4, 0.55],
+  [5, 0.73],
+  [6, 0.93],
+];
 
 async function shot(page, name) {
   await page.screenshot({ path: path.join(out, `${name}.png`) });
@@ -18,7 +27,7 @@ async function canvasCheck(page, name) {
     const b = JSON.parse(el.dataset.bounds);
     const collisions = [
       ...document.querySelectorAll(
-        ".dt-story-copy,.dt-stage-actions a,.dt-scene-tools,.dt-hero-caption",
+        ".dt-story-copy,.dt-stage-actions>.dt-primary,.dt-scene-tools",
       ),
     ]
       .filter((node) => {
@@ -61,7 +70,16 @@ async function canvasCheck(page, name) {
       35
     )
       colorful++;
-  assert(colorful > 250, `${name}: blank or untextured canvas (${colorful})`);
+  const phase = await page.locator(".dt-canvas").getAttribute("data-product");
+  const stats = await sharp(buffer).stats();
+  assert(
+    stats.channels.slice(0, 3).every((c) => c.stdev > 12),
+    `${name}: uniform canvas`,
+  );
+  assert(
+    colorful > (phase === "preparation" ? 150 : 250),
+    `${name}: blank or untextured canvas (${colorful})`,
+  );
   return { buffer, colorful };
 }
 
@@ -89,6 +107,66 @@ async function check(browserType, name, viewport, options = {}) {
     .locator(".dt-canvas[data-state=ready]")
     .waitFor({ timeout: 45000 });
   await page.waitForTimeout(900);
+  if (options.reducedMotion !== "reduce") {
+    await page.evaluate(() =>
+      window.scrollTo({
+        top:
+          (document.querySelector(".dt-story").offsetHeight - innerHeight) *
+          0.07,
+        behavior: "instant",
+      }),
+    );
+    await page.waitForTimeout(400);
+    await page
+      .getByRole("button", {
+        name: "ფქვილის შესავლის თავიდან გაშვება",
+        exact: true,
+      })
+      .click();
+    await page.waitForFunction(
+      () =>
+        Number(document.querySelector(".dt-canvas").dataset.intro) > 0.4 &&
+        Number(document.querySelector(".dt-canvas").dataset.progress) < 0.005,
+    );
+    assert.equal(
+      await page.locator(".dt-canvas").getAttribute("data-flour"),
+      "true",
+    );
+    await shot(page, `${name}-flour`);
+    await page
+      .getByRole("button", { name: "მოძრაობის შეჩერება", exact: true })
+      .click();
+    const stopped = Number(
+      await page.locator(".dt-canvas").getAttribute("data-intro"),
+    );
+    await page.waitForTimeout(250);
+    assert(
+      Math.abs(
+        Number(await page.locator(".dt-canvas").getAttribute("data-intro")) -
+          stopped,
+      ) < 0.1,
+      "Flour pause did not stop time",
+    );
+    await page
+      .getByRole("button", { name: "მოძრაობის გაგრძელება", exact: true })
+      .click();
+    await page.waitForFunction(
+      () =>
+        Number(document.querySelector(".dt-canvas").dataset.formation) > 0.2,
+    );
+    assert(
+      Number(await page.locator(".dt-canvas").getAttribute("data-formation")) <
+        1,
+    );
+    await shot(page, `${name}-gather`);
+  }
+  await page.waitForFunction(
+    () => Number(document.querySelector(".dt-canvas").dataset.intro) >= 5.99,
+  );
+  assert.equal(
+    await page.locator(".dt-canvas").getAttribute("data-product"),
+    "preparation",
+  );
   assert.equal(await page.locator("html").getAttribute("lang"), "ka");
   assert.equal(
     await page.locator(".dt-canvas").getAttribute("data-slices"),
@@ -102,11 +180,7 @@ async function check(browserType, name, viewport, options = {}) {
   const initial = await canvasCheck(page, name);
   await shot(page, `${name}-hero`);
   if (quick) {
-    for (const [stage, p] of [
-      [1, 0.34],
-      [2, 0.64],
-      [3, 0.91],
-    ]) {
+    for (const [stage, p] of stages) {
       await page.evaluate(
         (p) =>
           window.scrollTo({
@@ -127,6 +201,8 @@ async function check(browserType, name, viewport, options = {}) {
     await browser.close();
     return;
   }
+  await page.getByRole("button", { name: "მოვამზადოთ", exact: true }).click();
+  await page.waitForTimeout(1600);
   await page
     .getByRole("button", { name: "პიცის 90°-ით მობრუნება", exact: true })
     .click();
@@ -156,7 +232,8 @@ async function check(browserType, name, viewport, options = {}) {
   const timeOrigin = await page.evaluate(() => performance.timeOrigin);
   if (name === "desktop" || name === "mobile") {
     for (const p of [
-      0.12, 0.2, 0.24, 0.27, 0.45, 0.49, 0.51, 0.73, 0.76, 0.98,
+      0.12, 0.2, 0.24, 0.27, 0.4, 0.45, 0.49, 0.51, 0.65, 0.68, 0.7, 0.73, 0.76,
+      0.98,
     ]) {
       await page.evaluate(
         (p) =>
@@ -182,11 +259,7 @@ async function check(browserType, name, viewport, options = {}) {
     timeOrigin,
     "Language switch reloads page",
   );
-  for (const [stage, p] of [
-    [1, 0.34],
-    [2, 0.64],
-    [3, 0.91],
-  ]) {
+  for (const [stage, p] of stages) {
     await page.evaluate(
       (p) =>
         window.scrollTo({
@@ -203,7 +276,31 @@ async function check(browserType, name, viewport, options = {}) {
       String(stage),
     );
     await canvasCheck(page, `${name}-${stage}`);
+    const state = await page
+      .locator(".dt-canvas")
+      .evaluate((el) => ({ ...el.dataset }));
+    if (stage === 1)
+      assert(
+        Number(state.form) > 0.4 && Number(state.topping) === 0,
+        "Dough must precede toppings",
+      );
     if (stage === 2)
+      assert(
+        Number(state.topping) > 0.1 && Number(state.topping) < 0.44,
+        "Sauce stage",
+      );
+    if (stage === 3)
+      assert(
+        Number(state.topping) > 0.44 && Number(state.topping) < 0.75,
+        "Cheese stage",
+      );
+    if (stage === 4)
+      assert(
+        Number(state.topping) > 0.75 && Number(state.bake) === 0,
+        "Pepperoni precedes baking",
+      );
+    if (stage >= 5) assert.equal(state.product, "baked");
+    if (stage === 6)
       assert(
         Number(await page.locator(".dt-canvas").getAttribute("data-split")) >
           0.9,
@@ -308,6 +405,8 @@ async function fallback(mode) {
       : ".dt-loading-scene";
   await page.locator(selector).waitFor();
   assert(await page.locator(selector).evaluate((el) => el.naturalWidth > 0));
+  await page.getByRole("button", { name: "მოვამზადოთ", exact: true }).click();
+  await page.waitForTimeout(1200);
   await page.locator(".dt-stage-actions a").click();
   await page.waitForTimeout(1000);
   assert(await page.locator(".dt-flavor-row").first().isVisible());

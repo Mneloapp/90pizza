@@ -1,15 +1,26 @@
 # 90pizza: The 90-degree detour
 
-An original product-led brand prototype. Only the existing logo and brand idea
-were retained. The old flour, kneading, oven, cheese-web and packaging sequence is
-not mounted by the new landing route.
+An original product-led brand prototype. The flour-to-pizza opening is restored
+inside the new architectural studio. The accepted flavor selection, delivery
+section and footer are retained. The old oven, cheese-web and packaging sequence
+is not mounted by this route.
 
 ## Story
 
-1. A different direction: a thin square pizza in a red architectural studio.
-2. The first bite: the camera lowers to reveal the crisp, thin base.
-3. Your corner: nine independent meshes separate into an equal sharing grid.
-4. Your call: the camera travels around the product, then leads to six flavors.
+1. Flour: an opening burst gathers into a ball of dough on the work surface.
+2. Dough: the same mesh is rolled into a thin square base.
+3. Tomato: a spoon spreads sauce while leaving the crust uncovered.
+4. Mozzarella: instanced shreds settle into a generous cheese layer.
+5. Pepperoni: cupped toppings arrive above the cheese.
+6. The first bite: the assembled pizza bakes and transitions into the Blender model.
+7. Your corner: nine independent meshes separate, leading to the six-flavor menu.
+
+All preparation stages share one camera, origin, renderer and scroll timeline.
+The flour sampler and dough deformation share the same shape function, and the
+final model uses a complementary dither dissolve rather than a canvas remount.
+The camera's work-area bounds continuously interpolate into the baked model's
+bounds. The opening can be replayed or paused; scrolling can skip ahead without
+waiting for an intro overlay. Reduced motion starts with formed dough.
 
 The scene is rendered live with Three.js. No video is used. The menu is a
 selection prototype, not a functioning checkout. Wolt and Glovo are visibly
@@ -22,6 +33,8 @@ marked as unavailable until launch. Georgian is the initial language.
 - `pepperoni.jpg`, `crumb.jpg`: source textures for Blender.
 - `../../public/models/detour-pizza.glb`: nine meshes with Draco compression.
 - `../../components/detour/`: scoped application, translations, camera and CSS.
+- `../../components/pizza-{flour,dough,preparation,toppings}.ts`: shared preparation builders.
+- `../../scripts/verify-assembly.cjs`: timeline order, bounds and continuity tests.
 - `../../scripts/verify-detour.cjs`: browser and canvas regression suite.
 
 Build the model with Blender 5.2:
@@ -64,6 +77,9 @@ Individual topping briefs and output files:
 
 Menu assets are in `public/images/detour/`. `hero.webp` is a Cycles render of the
 new Blender scene, not a generated video or a reused image from the old page.
+`dough.webp` is a still captured from the live Three.js preparation scene, used
+for the opening fallback. It is 25 kB; no additional generation credits were used
+to restore the preparation sequence.
 
 Original generation files (under the thread's `.codex/generated_images` folder):
 
@@ -93,8 +109,9 @@ The suite checks five viewport sizes, Chrome and WebKit, default Georgian and
 no-reload English switching, 3D model loading, nine meshes, nonblank canvas
 pixels, visual changes, projected product/copy intersections, all six flavor
 images, dialog keyboard focus and Escape, mobile navigation, reduced motion,
-Save-Data, WebGL failure, network errors and broken images. Screenshots and a
-machine-readable report are written to `/private/tmp/90pizza-detour-qa`.
+Save-Data, WebGL failure, network errors and broken images. The suite also checks
+flour replay/pause, gathering, ingredient order, seven chapters and baking
+continuity. Set `QA_OUT` to choose the screenshot/report directory.
 
 Physical-device GPU performance still depends on device/thermal conditions;
 browser emulation is not a substitute for every real handset.

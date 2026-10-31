@@ -5,7 +5,40 @@ export const smooth = (n: number) => {
   return t * t * (3 - 2 * t);
 };
 export const mix = (a: number, b: number, t: number) => a + (b - a) * t;
-export const chapterFor = (p: number) => Math.min(3, Math.floor(clamp(p) * 4));
+export const chapterStops = [0, 0.12, 0.28, 0.4, 0.49, 0.58, 0.8, 1] as const;
+export const chapterTargets = [
+  0, 0.21, 0.35, 0.455, 0.545, 0.73, 0.93,
+] as const;
+export function chapterFor(p: number) {
+  for (let i = chapterStops.length - 2; i >= 0; i--)
+    if (clamp(p) >= chapterStops[i]) return i;
+  return 0;
+}
+
+export function assemblyAt(p: number, elapsed: number) {
+  const time = Math.max(elapsed, smooth(p / 0.12) * 6);
+  const topping =
+    p < 0.4
+      ? mix(0, 0.43, clamp((p - 0.28) / 0.12))
+      : p < 0.49
+        ? mix(0.43, 0.75, clamp((p - 0.4) / 0.09))
+        : mix(0.75, 1, clamp((p - 0.49) / 0.09));
+  return {
+    time,
+    formation: smooth((time - 2.05) / 2.6),
+    form: smooth((p - 0.12) / 0.16),
+    topping,
+    bake: smooth((p - 0.58) / 0.1),
+    handoff: smooth((p - 0.65) / 0.06),
+    split: smooth((p - 0.8) / 0.09),
+    orbit:
+      p < 0.58
+        ? mix(0.1, 0.66, smooth((p - 0.12) / 0.3))
+        : p < 0.72
+          ? mix(0.66, 0.33, smooth((p - 0.58) / 0.14))
+          : mix(0.33, 0.66, smooth((p - 0.72) / 0.18)),
+  };
+}
 
 // All camera targets keep the product below the copy, including narrow phones.
 export function scenePose(progress: number, aspect: number) {
