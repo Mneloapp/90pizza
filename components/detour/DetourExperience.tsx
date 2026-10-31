@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDown,
@@ -14,19 +13,14 @@ import {
   Menu,
   Pause,
   Play,
-  RotateCw,
   RotateCcw,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { chapterFor, chapterTargets, clamp } from "./scene-math";
+import { clamp } from "./scene-math";
+import StoryFilm, { filmChapter, filmTargets, STORY_VIDEO } from "./StoryFilm";
 import { copy, flavors, type Language } from "./content";
 import "./detour.css";
-
-const Scene = dynamic(() => import("./DetourScene"), {
-  ssr: false,
-  loading: () => <div className="dt-scene-loading" aria-hidden="true" />,
-});
 
 function LanguageSwitch({
   language,
@@ -60,7 +54,6 @@ export default function DetourExperience() {
   const progress = useRef(0);
   const progressLine = useRef<HTMLDivElement>(null);
   const [chapter, setChapter] = useState(0);
-  const [turns, setTurns] = useState(0);
   const [replay, setReplay] = useState(0);
   const [paused, setPaused] = useState(false);
   const [dataSaver, setDataSaver] = useState<boolean | null>(null);
@@ -74,8 +67,6 @@ export default function DetourExperience() {
   const reduced = useReducedMotion();
   const t = copy[language];
   const flavor = flavors[selected];
-  const fallbackSrc = `/images/detour/story-${chapter}.webp`;
-  const fallbackMobileSrc = `/images/detour/story-${chapter}-mobile.webp`;
 
   useEffect(() => {
     const previous = document.documentElement.lang;
@@ -99,7 +90,7 @@ export default function DetourExperience() {
       progress.current = clamp(-rect.top / Math.max(distance, 1));
       if (progressLine.current)
         progressLine.current.style.transform = `scaleX(${progress.current})`;
-      setChapter(chapterFor(progress.current));
+      setChapter(filmChapter(progress.current));
     };
     const scroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -148,7 +139,7 @@ export default function DetourExperience() {
       top:
         top +
         (story.current.offsetHeight - window.innerHeight) *
-          chapterTargets[index],
+          filmTargets[index],
       behavior: reduced ? "instant" : "smooth",
     });
   };
@@ -206,29 +197,16 @@ export default function DetourExperience() {
 
       <main id="top">
         <section ref={story} className="dt-story" aria-label={t.story}>
-          <div className="dt-stage" data-chapter={chapter}>
+          <div className="dt-stage dt-film-stage" data-chapter={chapter}>
             {dataSaver === null ? (
               <div className="dt-scene-loading" aria-hidden="true" />
-            ) : dataSaver ? (
-              <picture>
-                <source media="(max-width: 767px)" srcSet={fallbackMobileSrc} />
-                <img
-                  className="dt-loading-scene"
-                  src={fallbackSrc}
-                  width="1500"
-                  height="1000"
-                  alt={t.scene}
-                />
-              </picture>
             ) : (
-              <Scene
+              <StoryFilm
                 progress={progress}
-                turns={turns}
                 replay={replay}
                 paused={paused}
                 reduced={Boolean(reduced)}
-                fallbackSrc={fallbackSrc}
-                fallbackMobileSrc={fallbackMobileSrc}
+                saveData={dataSaver}
                 label={t.scene}
               />
             )}
@@ -278,25 +256,24 @@ export default function DetourExperience() {
                   <ArrowUpRight size={20} />
                 </a>
               )}
-              {dataSaver === false && (
+              {dataSaver !== null && (
                 <div className="dt-scene-tools">
+                  <a className="dt-icon" href={STORY_VIDEO} target="_blank" rel="noopener noreferrer" title={t.watchFilm} aria-label={t.watchFilm}>
+                    <Play size={18} />
+                  </a>
                   <button
                     className="dt-icon"
-                    title={chapter === 0 ? t.replay : t.rotate}
-                    aria-label={chapter === 0 ? t.replay : t.rotate}
+                    title={t.replay}
+                    aria-label={t.replay}
                     onClick={() => {
-                      if (chapter === 0) {
-                        goToChapter(0);
-                        setPaused(false);
-                        setReplay((n) => n + 1);
-                      } else setTurns((n) => n + 1);
+                      window.scrollTo({ top: 0, behavior: "instant" });
+                      progress.current = 0;
+                      setChapter(0);
+                      setPaused(false);
+                      setReplay((n) => n + 1);
                     }}
                   >
-                    {chapter === 0 ? (
-                      <RotateCcw size={19} />
-                    ) : (
-                      <RotateCw size={19} />
-                    )}
+                    <RotateCcw size={19} />
                   </button>
                   <button
                     className="dt-icon"

@@ -19,6 +19,7 @@ export const copy = {
     pause: "მოძრაობის შეჩერება",
     play: "მოძრაობის გაგრძელება",
     replay: "ფქვილის შესავლის თავიდან გაშვება",
+    watchFilm: "სრული ვიდეოს ნახვა",
     begin: "მოვამზადოთ",
     viewMenu: "მენიუს ნახვა",
     scene:
@@ -105,6 +106,7 @@ export const copy = {
     pause: "Pause motion",
     play: "Resume motion",
     replay: "Replay the flour opening",
+    watchFilm: "Watch the full film",
     begin: "Let's make it",
     viewMenu: "View menu",
     scene:

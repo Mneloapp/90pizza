@@ -1,0 +1,34 @@
+{
+  "version": "v2-editorial-website-release",
+  "durationSeconds": 34.166667,
+  "frames": 820,
+  "fps": 24,
+  "newPaidGenerations": 0,
+  "desktop": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JSigfTotkxyaCMqXUGhwOyS6kk/22aab3f5-6ae0-41a9-aaf0-a842188e30bb.mp4",
+  "mobile": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JSigfTotkxyaCMqXUGhwOyS6kk/f93af991-0c34-4bc6-8046-71200e9b3de6.mp4",
+  "poster": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JSigfTotkxyaCMqXUGhwOyS6kk/bd098f05-0475-406e-8e73-74d12994028c.jpg",
+  "encoding": "H264, yuv420p, silent, faststart, 12-frame GOP; desktop 1440x1080, mobile 960x720",
+  "edlHalfOpen24fps": [
+    { "source": "V2", "start": 0, "end": 279 },
+    { "source": "V4oven", "start": 0, "end": 144 },
+    { "source": "V4cut", "start": 0, "end": 96 },
+    { "source": "V4pack", "start": 0, "end": 111 },
+    { "source": "V7box", "start": 0, "end": 132 },
+    { "source": "V4pack", "start": 144, "end": 192 },
+    { "source": "V2", "start": 711, "end": 721 }
+  ],
+  "sourceUrls": {
+    "V2": "https://cdn.openart.ai/openart-ai/production/2026-10/create-video/gwAz54Gqo5MlmArlTZub/cgt-20261031234822-urdy3_1793462297993_ae64308d.mp4",
+    "V4oven": "https://cdn.openart.ai/openart-ai/production/2026-10/create-video/gwAz54Gqo5MlmArlTZub/cgt-20261101023125-hy2ca_1793471871286_3f451d75.mp4",
+    "V4cut": "https://cdn.openart.ai/openart-ai/production/2026-10/create-video/gwAz54Gqo5MlmArlTZub/cgt-20261101023201-exztw_1793471868106_4d79eab1.mp4",
+    "V4pack": "https://cdn.openart.ai/openart-ai/production/2026-10/create-video/gwAz54Gqo5MlmArlTZub/cgt-20261101023207-e0di7_1793471983017_5480f3f7.mp4",
+    "V7box": "https://cdn.openart.ai/openart-ai/production/2026-10/create-video/gwAz54Gqo5MlmArlTZub/cgt-20261101043300-evow9_1793479334248_aaa42c2e.mp4"
+  },
+  "qa": {
+    "fullDecode": "passed",
+    "fullPlayback": ["Chrome desktop passed, ended at 34.166667", "iPhone WebKit emulation passed, ended at 34.167"],
+    "website": "Desktop 1440x900, iPhone 390x664, small mobile 320x568, landscape 844x390: forward/reverse seeking, GE/EN, pause/resume, replay, flavor selection, modal and horizontal overflow checked.",
+    "visualReview": "Full-film overview samples and consecutive frames at all six joins inspected. Oven-to-cut at 17.625s and packing-to-closure at 31.75s are intentional editorial cuts, not a continuous take.",
+    "limitations": "Generated visual prototype. Frame samples and playback automation do not certify continuous aesthetic or physical accuracy. Tray support differs across the oven-to-overhead editorial cut; packing cuts after the empty tray clears the carton but before it fully exits the image. Small packaging print and a physical phone were not certified. No claim that every frame is flawless."
+  }
+}
