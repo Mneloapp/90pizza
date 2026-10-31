@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { Resources } from "./pizza-model";
+import {
+  doughPose,
+  doughHeightAt,
+  sampleDough,
+  type DoughPose,
+} from "./pizza-dough";
 
 const smooth = THREE.MathUtils.smoothstep;
 const random = (n: number) => {
@@ -80,7 +86,6 @@ function doughSurface({ keep }: Resources, onAsset: () => void) {
       sheen: 0.12,
       sheenRoughness: 0.9,
       sheenColor: new THREE.Color("#fff6e5"),
-      transparent: true,
     }),
   );
   // Object-space projection avoids pinching the flour texture at sphere UV poles.
@@ -137,15 +142,81 @@ function doughSurface({ keep }: Resources, onAsset: () => void) {
   return material;
 }
 
+function rollingPin({ keep }: Resources) {
+  const grain = new Uint8Array(256 * 64 * 4);
+  for (let y = 0; y < 64; y++)
+    for (let x = 0; x < 256; x++) {
+      const line = Math.sin(y * 2.8 + Math.sin(x * 0.035) * 1.5) * 3;
+      const detail = random(x + y * 256) * 9 + line;
+      grain.set(
+        [171 + detail, 126 + detail, 77 + detail, 255],
+        (y * 256 + x) * 4,
+      );
+    }
+  const texture = keep(new THREE.DataTexture(grain, 256, 64));
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  const wood = keep(
+    new THREE.MeshStandardMaterial({ map: texture, roughness: 0.76 }),
+  );
+  const profile = [
+    [0, -2.35],
+    [0.065, -2.34],
+    [0.078, -2.16],
+    [0.09, -1.85],
+    [0.145, -1.65],
+    [0.16, -1.45],
+    [0.16, 1.45],
+    [0.145, 1.65],
+    [0.09, 1.85],
+    [0.078, 2.16],
+    [0.065, 2.34],
+    [0, 2.35],
+  ].map(([r, y]) => new THREE.Vector2(r, y));
+  const mesh = new THREE.Mesh(keep(new THREE.LatheGeometry(profile, 48)), wood);
+  mesh.rotation.z = Math.PI / 2;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  const spin = new THREE.Group();
+  spin.add(mesh);
+  const group = new THREE.Group();
+  group.add(spin);
+  return {
+    group,
+    update(pose: DoughPose, form: number) {
+      group.visible = pose.tool > 0.001;
+      group.rotation.y = pose.turn;
+      const lift =
+        (1 - pose.tool) * 1.4 +
+        Math.sin(smooth(form, 0.51, 0.61) * Math.PI) * 0.55;
+      const x = Math.sin(pose.turn) * pose.travel;
+      const z = Math.cos(pose.turn) * pose.travel;
+      group.position.set(
+        x,
+        doughHeightAt(x, z, pose) -
+          pose.halfHeight * pose.pressure * 0.16 +
+          0.16 +
+          lift,
+        z,
+      );
+      group.scale.setScalar(0.85 + pose.tool * 0.15);
+      spin.rotation.x = pose.travel / 0.16;
+    },
+  };
+}
+
 export function buildPreparation({ keep }: Resources, onAsset: () => void) {
   const group = new THREE.Group();
   const geometry = keep(new THREE.SphereGeometry(1, 96, 64));
   const original = new Float32Array(geometry.attributes.position.array);
+  const point = new THREE.Vector3();
   const doughMaterial = doughSurface({ keep }, onAsset);
   const dough = new THREE.Mesh(geometry, doughMaterial);
   dough.castShadow = true;
   dough.receiveShadow = true;
   group.add(dough);
+  const pin = rollingPin({ keep });
+  group.add(pin.group);
   const sauceMaterial = keep(
     new THREE.MeshStandardMaterial({ color: "#a91d0d", roughness: 0.43 }),
   );
@@ -217,7 +288,8 @@ export function buildPreparation({ keep }: Resources, onAsset: () => void) {
   group.add(pepperonis);
 
   let lastShape = -1,
-    lastFormation = -1;
+    lastTopping = -1;
+  let pose = doughPose(0);
   function update(
     form: number,
     topping: number,
@@ -225,54 +297,38 @@ export function buildPreparation({ keep }: Resources, onAsset: () => void) {
     quiet: boolean,
     formation = 1,
   ) {
-    const shape = smooth(form, 0.03, 0.82);
-    doughMaterial.opacity = formation;
-    doughMaterial.depthWrite = formation > 0.98;
+    const shape = form;
     dough.visible = formation > 0.001;
-    dough.castShadow = formation > 0.9;
+    const changing = Math.abs(form - lastShape) > 0.00005;
+    if (changing) pose = doughPose(form);
+    pin.update(pose, form);
+    const massScale = Math.cbrt(Math.max(0.001, formation));
+    dough.scale.setScalar(massScale);
     const positions = geometry.attributes.position;
-    if (shape !== lastShape || formation !== lastFormation) {
+    if (changing) {
       for (let i = 0; i < positions.count; i++) {
         const nx = original[i * 3],
           ny = original[i * 3 + 1],
           nz = original[i * 3 + 2];
-        const angle = Math.atan2(nz, nx);
-        const folds =
-          Math.exp(-(((ny + 0.55) / 0.28) ** 2)) *
-          Math.sin(angle * 11 + ny * 9) *
-          0.035;
-        const contour =
-          1 +
-          Math.sin(angle * 3 + ny * 2) * 0.035 +
-          Math.cos(angle * 5 - ny * 3) * 0.018 -
-          folds;
-        const knead = (1 - formation) * Math.sin(angle * 4 + ny * 5) * 0.11;
-        positions.setXYZ(
-          i,
-          THREE.MathUtils.lerp(
-            nx * 0.88 * (contour + knead),
-            Math.sign(nx) * Math.abs(nx) ** 0.18 * 1.8,
-            shape,
-          ),
-          THREE.MathUtils.lerp(
-            ny * (ny > 0 ? 0.5 : 0.36) +
-              Math.sin(angle * 3) * (1 - ny * ny) * 0.017,
-            Math.sign(ny) * Math.abs(ny) ** 0.25 * 0.065,
-            shape,
-          ),
-          THREE.MathUtils.lerp(
-            nz * 0.81 * (contour - knead * 0.5),
-            Math.sign(nz) * Math.abs(nz) ** 0.18 * 1.8,
-            shape,
-          ),
-        );
+        sampleDough(nx, ny, nz, pose, point);
+        positions.setXYZ(i, point.x, point.y, point.z);
       }
       positions.needsUpdate = true;
       geometry.computeVertexNormals();
       geometry.computeBoundingSphere();
       lastShape = shape;
-      lastFormation = formation;
     }
+    if (topping <= 0) {
+      sauce.visible =
+        spiral.visible =
+        shreds.visible =
+        pepperonis.visible =
+          false;
+      lastTopping = 0;
+      return;
+    }
+    if (topping === 1 && lastTopping === 1) return;
+    lastTopping = topping;
     const sauceProgress = smooth(topping, 0.02, 0.42);
     sauce.visible = topping > 0.12;
     sauce.scale.set(
@@ -327,7 +383,7 @@ export function buildPreparation({ keep }: Resources, onAsset: () => void) {
     pepperonis.instanceMatrix.needsUpdate = true;
     pepperonis.visible = topping > 0.47;
   }
-  return { group, update };
+  return { group, update, dough, pin: pin.group };
 }
 
 export function buildOven({ keep }: Resources) {

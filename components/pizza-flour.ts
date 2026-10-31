@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { Resources } from "./pizza-model";
+import { doughPose, sampleDough, DOUGH_BASE } from "./pizza-dough";
 
 const random = (n: number) => {
   const v = Math.sin(n * 127.1 + 17.3) * 43758.5453;
@@ -11,11 +12,12 @@ const movement = `
   float impulse = 1.0 - exp(-max(0.0, elapsed - seed.w * 0.13) * 5.5);
   float radius = impulse * (0.65 + seed.z * 1.65);
   vec3 outward = direction * radius;
-  outward.y = outward.y * 0.67 + 0.24 - elapsed * elapsed * 0.08;
+  outward.y = outward.y * 0.67 + 0.24 - elapsed * elapsed * 0.08 * (1.0 - gather) * (1.0 - gather);
   float angle = gather * (1.0 - gather) * 3.5;
   outward.xz = mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * outward.xz;
-  vec3 target = direction * vec3(0.84, 0.46, 0.8);
-  target.y += 0.04;
+  float mass = smoothstep(2.05, 4.65, elapsed);
+  vec3 target = destination * pow(max(0.001, mass), 0.333333);
+  target.y += 0.015;
   vec3 center = mix(outward, target, gather);
 `;
 
@@ -38,18 +40,23 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
   };
   function attributes(count: number) {
     const direction = new Float32Array(count * 3);
+    const destination = new Float32Array(count * 3);
     const seed = new Float32Array(count * 4);
+    const pose = doughPose(0),
+      point = new THREE.Vector3();
     for (let i = 0; i < count; i++) {
       const y = random(i + 29) * 2 - 1;
       const angle = random(i + 2) * Math.PI * 2;
       const r = Math.sqrt(1 - y * y);
       direction.set([Math.cos(angle) * r, y, Math.sin(angle) * r], i * 3);
+      sampleDough(direction[i * 3], y, direction[i * 3 + 2], pose, point);
+      point.toArray(destination, i * 3);
       seed.set(
         [random(i + 4), random(i + 57), random(i + 87), random(i + 121)],
         i * 4,
       );
     }
-    return { direction, seed };
+    return { direction, destination, seed };
   }
 
   // Depth-positioned, noise-shaped billboards provide the powder's mass.
@@ -74,6 +81,10 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
     new THREE.InstancedBufferAttribute(cloudAttributes.direction, 3),
   );
   cloudsGeometry.setAttribute(
+    "destination",
+    new THREE.InstancedBufferAttribute(cloudAttributes.destination, 3),
+  );
+  cloudsGeometry.setAttribute(
     "seed",
     new THREE.InstancedBufferAttribute(cloudAttributes.seed, 4),
   );
@@ -85,7 +96,7 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexShader: `
-      attribute vec3 direction;
+      attribute vec3 direction, destination;
       attribute vec4 seed;
       uniform float elapsed;
       varying vec2 vUv;
@@ -101,7 +112,7 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
         gl_Position = projectionMatrix * view;
         vUv = uv;
         vSeed = seed;
-        vOpacity = smoothstep(0.0, 0.18, elapsed) * (1.0 - smoothstep(3.4, 4.7, elapsed));
+        vOpacity = smoothstep(0.0, 0.18, elapsed) * (1.0 - smoothstep(3.7, 5.25, elapsed));
       }
     `,
       fragmentShader: `
@@ -145,6 +156,10 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
     new THREE.BufferAttribute(grainAttributes.direction, 3),
   );
   geometry.setAttribute(
+    "destination",
+    new THREE.BufferAttribute(grainAttributes.destination, 3),
+  );
+  geometry.setAttribute(
     "seed",
     new THREE.BufferAttribute(grainAttributes.seed, 4),
   );
@@ -154,7 +169,7 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
       transparent: true,
       depthWrite: false,
       vertexShader: `
-      attribute vec3 direction;
+      attribute vec3 direction, destination;
       attribute vec4 seed;
       uniform float elapsed, pixelRatio, viewportHeight;
       varying float opacity;
@@ -163,7 +178,7 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
         vec4 view = modelViewMatrix * vec4(center, 1.0);
         gl_Position = projectionMatrix * view;
         gl_PointSize = clamp((0.004 + seed.x * 0.009) * viewportHeight * pixelRatio / max(1.0, -view.z), 0.6, 3.0 * pixelRatio);
-        opacity = smoothstep(0.02, 0.2, elapsed) * (1.0 - smoothstep(4.1, 4.8, elapsed)) * (0.2 + seed.z * 0.45);
+        opacity = smoothstep(0.02, 0.2, elapsed) * (1.0 - smoothstep(4.5, 5.4, elapsed)) * (0.2 + seed.z * 0.45);
       }
     `,
       fragmentShader: `
@@ -187,7 +202,7 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
     const angle = random(i + 20) * Math.PI * 2;
     const r = 0.72 + random(i + 48) ** 2 * 0.8;
     residuePositions.set(
-      [Math.cos(angle) * r, -0.365, Math.sin(angle) * r],
+      [Math.cos(angle) * r, DOUGH_BASE + 0.012, Math.sin(angle) * r],
       i * 3,
     );
   }
@@ -216,15 +231,17 @@ export function buildFlour({ keep }: Resources, compact: boolean) {
       quiet: boolean,
       pixelRatio: number,
       viewportHeight: number,
+      form = 0,
     ) {
       const time = quiet ? 6 : elapsed;
-      curtain.visible = visible && !quiet && time < 4.8;
+      curtain.visible = visible && !quiet && time < 5.4;
       uniforms.elapsed.value = time;
       uniforms.pixelRatio.value = pixelRatio;
       uniforms.viewportHeight.value = viewportHeight;
       group.visible = visible;
+      group.scale.set(1 + form * 1.3, 1, 1 + form * 1.3);
       residueMaterial.opacity =
-        THREE.MathUtils.smoothstep(time, 2.8, 4.8) * 0.38;
+        THREE.MathUtils.smoothstep(time, 2.8, 4.8) * 0.38 * (1 - form * 0.5);
     },
   };
 }

@@ -34,7 +34,9 @@ async function seek(page, value) {
   await page.waitForTimeout(1200);
 }
 async function canvasPixels(canvas) {
-  const buffer = await canvas.screenshot();
+  const buffer = await canvas.screenshot({
+    style: ".xp-header, .xp-wordmark, .xp-opening, .xp-chapter-copy, .xp-recipe-mark, .xp-making-bottom, .xp-scene-controls, .xp-progress { visibility: hidden !important; }",
+  });
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
     .raw()
@@ -322,6 +324,7 @@ async function touch(browser) {
     const flourCheck = require("./verify-flour.cjs");
     await flourCheck(chrome, url, output, 1440);
     await flourCheck(chrome, url, output, 390);
+    await require("./verify-dough.cjs")(chrome, url, output, 390);
     for (const size of [
       { width: 1440, height: 1000 },
       { width: 390, height: 844 },

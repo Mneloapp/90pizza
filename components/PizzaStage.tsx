@@ -8,6 +8,8 @@ import { buildBox, buildCheese, buildPizza } from "./pizza-model";
 import { buildPreparation, buildOven } from "./pizza-preparation";
 import { storyAt } from "./pizza-story";
 import { buildFlour } from "./pizza-flour";
+import { sceneFraming } from "./pizza-camera";
+import { DOUGH_BASE } from "./pizza-dough";
 
 export type StageState = {
   open: boolean;
@@ -132,18 +134,25 @@ export default function PizzaStage({
       food.add(cheese.group);
       const floor = new THREE.Mesh(
         keep(new THREE.PlaneGeometry(50, 50)),
-        keep(new THREE.ShadowMaterial({ opacity: 0.17, color: "#000000" })),
+        keep(
+          new THREE.ShadowMaterial({
+            opacity: 0.22,
+            color: "#000000",
+            depthWrite: false,
+          }),
+        ),
       );
       floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -0.9;
+      floor.position.y = DOUGH_BASE + 0.013;
       floor.receiveShadow = true;
-      scene.add(floor);
+      world.add(floor);
       let pizza: ReturnType<typeof buildPizza> | undefined;
       let opening = 0,
         lifting = 0,
         spreading = 0,
-        rotation = -0.32,
-        chapter = 0;
+        rotation = -0.32;
+      let formation = 0,
+        forming = 0;
       let width = 1,
         height = 1;
       let introElapsed = 0,
@@ -178,32 +187,42 @@ export default function PizzaStage({
         if (current.pour !== lastPour) {
           lastPour = current.pour;
           introElapsed = 0;
+          formation = 0;
         }
-        if (index === 0)
-          introElapsed = quiet ? 6 : Math.min(6, introElapsed + dt);
-        else introElapsed = 6;
+        introElapsed = quiet ? 6 : Math.min(6, introElapsed + dt);
+        const framing = sceneFraming(raw, width, height);
+        const formTarget = index === 0 ? 0 : index === 1 ? local : 1;
+        forming = quiet
+          ? formTarget
+          : THREE.MathUtils.damp(forming, formTarget, 12, dt);
+        const formationTarget =
+          index === 0 ? smooth(introElapsed, 2.05, 4.65) : 1;
+        formation = quiet
+          ? formationTarget
+          : THREE.MathUtils.damp(formation, formationTarget, 16, dt);
         flour.update(
           introElapsed,
-          index === 0,
+          index < 2,
           quiet,
           renderer.getPixelRatio(),
           height,
+          forming,
         );
-        const showIntroCopy = introElapsed > 3.4 || quiet;
+        const showIntroCopy = introElapsed > 4.1 || index > 0 || quiet;
         if (showIntroCopy !== introReady) {
           introReady = showIntroCopy;
           inputs.current.onIntroReady(introReady);
         }
-        floor.visible = index !== 0 || introElapsed > 3.4;
-        const doughReveal = smooth(introElapsed, 2.9, 4.5);
-        scene.environmentIntensity = index < 2 ? 0.25 : 0.45;
-        key.intensity = index < 2 ? 2.4 : 1.8;
-        key.position.set(-4, index < 2 ? 5 : 8, 5);
-        fill.intensity = index < 2 ? 0.85 : 0.5;
-        const targetChapter = index === 0 ? 0 : 1;
-        chapter = quiet
-          ? targetChapter
-          : THREE.MathUtils.damp(chapter, targetChapter, 6, dt);
+        floor.visible = true;
+        floor.position.y = THREE.MathUtils.lerp(
+          DOUGH_BASE + 0.013,
+          -0.42,
+          smooth(raw, 0.82, 0.87),
+        );
+        scene.environmentIntensity = 0.45 - framing.preparation * 0.2;
+        key.intensity = 1.8 + framing.preparation * 0.6;
+        key.position.set(-4, 8 - framing.preparation * 3, 5);
+        fill.intensity = 0.5 + framing.preparation * 0.35;
         const openTarget = index === 5 ? 1 - smooth(local, 0.45, 0.98) : 1;
         const liftTarget = index === 4 && current.lift ? 1 : 0;
         const spreadTarget =
@@ -221,19 +240,9 @@ export default function PizzaStage({
         world.rotation.y = rotation + pointer.x * 0.13;
         world.rotation.x = pointer.y * 0.035;
         world.rotation.z = quiet ? 0 : Math.sin(time * 0.00055) * 0.012;
-        const mobile = window.innerWidth < 700;
-        world.position.x =
-          index === 0 && !mobile && window.innerHeight < 620
-            ? 2
-            : mobile
-              ? 0
-              : chapter * 1.65;
-        const sizeTarget =
-          index === 0 ? 2.05 : index === 3 ? 1.06 : index === 5 ? 1.06 : 1.36;
-        world.scale.setScalar(damp(world.scale.x, sizeTarget));
-        world.position.y =
-          (index === 1 || index === 2 ? 0.2 : -0.1) +
-          (quiet ? 0 : Math.sin(time * 0.0008) * 0.025);
+        world.position.x = framing.x;
+        world.scale.setScalar(framing.scale);
+        world.position.y = framing.y;
         box.hinge.rotation.x = -opening * 2.05;
         box.group.position.y = -0.3 * (1 - smooth(local, 0, 0.35));
         box.group.scale.setScalar(
@@ -245,37 +254,36 @@ export default function PizzaStage({
         const entering = smooth(local, 0.05, 0.4),
           exiting = smooth(local, 0.66, 0.98);
         food.position.z = index === 3 ? -3.0 * entering * (1 - exiting) : 0;
-        oven.group.visible = index === 3;
-        oven.group.scale.setScalar(
-          index === 3 ? 0.9 + 0.1 * smooth(local, 0, 0.12) : 0.001,
-        );
+        const ovenPresence =
+          smooth(raw, 0.485, 0.535) * (1 - smooth(raw, 0.65, 0.705));
+        oven.group.visible = ovenPresence > 0.001;
+        oven.group.position.z = -8 * (1 - ovenPresence);
         oven.light.intensity =
-          index === 3 ? 8 + (quiet ? 0 : Math.sin(time * 0.002) * 0.8) : 0;
+          ovenPresence * (8 + (quiet ? 0 : Math.sin(time * 0.002) * 0.8));
         const preparing = index < 3 || (index === 3 && local < 0.56);
         preparation.group.visible = preparing;
         preparation.group.scale.setScalar(1);
         if (preparing)
           preparation.update(
-            index === 0 ? 0 : index === 1 ? local : 1,
+            forming,
             index < 2 ? 0 : index === 2 ? local : 1,
             time,
             quiet,
-            index === 0 ? doughReveal : 1,
+            formation,
           );
-        const ovenCamera = index === 3 ? 1 : 0;
-        const distance =
-          camera.aspect < 1
-            ? (index === 0 ? 0.85 : 1.25) / camera.aspect
-            : 1.08;
+        camera.aspect = framing.aspect;
         camera.position
-          .set(
-            index === 0 ? 3.2 : 4.2,
-            index === 0 ? 4.8 : THREE.MathUtils.lerp(7.8, 4.3, ovenCamera),
-            8.6,
-          )
-          .multiplyScalar(distance);
-        look.set(0, index === 5 ? 1 : 0.35, index === 3 ? -1.1 : -0.15);
+          .set(framing.cameraX, framing.cameraY, 8.6)
+          .multiplyScalar(framing.distance);
+        look.set(0, framing.lookY, framing.lookZ);
         camera.lookAt(look);
+        camera.updateProjectionMatrix();
+        const projection = camera.projectionMatrix.elements;
+        projection[0] *= framing.frame.width;
+        projection[5] *= framing.frame.height;
+        projection[8] -= 2 * framing.frame.left + framing.frame.width - 1;
+        projection[9] -= 1 - 2 * framing.frame.top - framing.frame.height;
+        camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
         if (pizza) {
           pizza.group.visible = !preparing;
           pizza.slices.forEach((slice, index) => {
@@ -302,6 +310,22 @@ export default function PizzaStage({
         element.dataset.phase = step.id;
         element.dataset.local = local.toFixed(3);
         element.dataset.intro = introElapsed.toFixed(2);
+        element.dataset.formation = formation.toFixed(3);
+        element.dataset.form = forming.toFixed(3);
+        element.dataset.roller = String(preparing && preparation.pin.visible);
+        element.dataset.doughOpacity = String(
+          preparation.dough.material.opacity,
+        );
+        element.dataset.camera = [
+          framing.cameraX,
+          framing.cameraY,
+          framing.distance,
+          framing.x,
+          framing.y,
+          framing.scale,
+        ]
+          .map((v) => v.toFixed(4))
+          .join(",");
         element.dataset.flour = String(flour.curtain.visible);
         element.dataset.burst =
           introElapsed < 1.8

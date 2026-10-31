@@ -102,6 +102,7 @@ module.exports = async function flourCheck(browser, url, output, width) {
   );
   await page.getByRole("button", { name: "1. Dough", exact: true }).click();
   await page.locator('.xp-stage[data-phase="dough"]').waitFor();
+  await page.locator('.xp-stage[data-flour="false"]').waitFor();
   assert.equal(await stage.getAttribute("data-flour"), "false");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   assert.deepEqual(errors, []);

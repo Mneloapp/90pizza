@@ -2,7 +2,12 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
-import { motion, useMotionValueEvent, useScroll } from "framer-motion";
+import {
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import {
   ArrowDown,
   ArrowRight,
@@ -30,6 +35,32 @@ export default function MakingWorld({
     offset: ["start start", "end end"],
   });
   const [chapter, setChapter] = useState(0);
+  const colorStops = [0.12, 0.19, 0.3, 0.34, 0.49, 0.54, 0.82, 0.87];
+  const backgroundColor = useTransform(scrollYProgress, colorStops, [
+    "#111111",
+    "#eeedeb",
+    "#eeedeb",
+    "#c21411",
+    "#c21411",
+    "#111111",
+    "#111111",
+    "#e01010",
+  ]);
+  // Crossfading black and white text makes it disappear at a mid-gray background.
+  const color = useTransform(backgroundColor, (background) => {
+    const channels = background.startsWith("#")
+      ? [1, 3, 5].map((i) => parseInt(background.slice(i, i + 2), 16))
+      : (background.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    const linear = channels.map((value) => {
+      const channel = value / 255;
+      return channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    const luminance =
+      linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+    return luminance > 0.183 ? "#050505" : "#ffffff";
+  });
   const currentChapter = useRef(0);
   const [ready, setReady] = useState(false);
   const [introReady, setIntroReady] = useState(false);
@@ -76,8 +107,9 @@ export default function MakingWorld({
       id="top"
       aria-labelledby="xp-title"
     >
-      <div
+      <motion.div
         className="xp-world-sticky"
+        style={{ backgroundColor, color }}
         data-chapter={storyIds[chapter]}
         data-intro-ready={introReady || reduced}
         data-scene-ready={ready}
@@ -224,7 +256,7 @@ export default function MakingWorld({
           style={{ scaleX: scrollYProgress }}
           aria-hidden="true"
         />
-      </div>
+      </motion.div>
       <span
         id="geometry"
         className="xp-making-anchor"

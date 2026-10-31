@@ -43,8 +43,8 @@ export const experienceCopy = {
       stages: [
         {
           label: "ცომი",
-          title: "ყველაფერი\nცომით იწყება.",
-          note: "თხელი საფუძველი. ხრაშუნა მომავლისთვის.",
+          title: "ნელა იშლება.\nთხლად ცხვება.",
+          note: "რბილი ცომიდან თხელ კვადრატამდე. ხრაშუნა კიდეების დასაწყისი.",
           detail: "30×30 / სწორი ფორმა",
         },
         {
@@ -142,8 +142,8 @@ export const experienceCopy = {
       stages: [
         {
           label: "Dough",
-          title: "It all starts\nwith the dough.",
-          note: "A thin beginning. A crisp future.",
+          title: "Slowly stretched.\nThinly baked.",
+          note: "From soft dough to a thin square. The beginning of crisp edges.",
           detail: "30×30 / the right shape",
         },
         {

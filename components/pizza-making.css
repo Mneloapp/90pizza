@@ -100,7 +100,7 @@
   max-width: 345px;
   font-size: 15px;
   line-height: 1.9;
-  opacity: 0.75;
+  opacity: 1;
 }
 .xp-process-detail {
   display: block;
@@ -495,8 +495,11 @@
   }
 }
 
-.xp-journey [data-chapter="hero"] .xp-stage {
+.xp-journey .xp-world-sticky .xp-stage {
   inset: 0;
+}
+.xp-journey .xp-world-sticky {
+  transition: none;
 }
 
 .xp-journey [data-chapter="hero"] .xp-wordmark,
