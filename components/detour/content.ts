@@ -23,7 +23,7 @@ export const copy = {
     begin: "მოვამზადოთ",
     viewMenu: "მენიუს ნახვა",
     scene:
-      "ფქვილი, ხელებით მომზადებული ცომი, ინგრედიენტები, ღუმელი, პირველი ნაჭერი და 90pizza-ს ყუთი",
+      "ფქვილი, თხელი ოთხკუთხედი ცომი, ინგრედიენტები, ღუმელი, ცხრა ნაჭერი და 90pizza-ს ყუთი",
     chapters: [
       {
         label: "ფქვილი",
@@ -33,8 +33,8 @@ export const copy = {
       },
       {
         label: "ცომი",
-        title: "კარგი გემო\nხელით იწყება.",
-        text: "წყალი. ფქვილი. ხელების სითბო. რბილი ცომიდან თხელ, ოთხკუთხედ ძირამდე.",
+        title: "ფქვილიდან\nსწორ ფორმამდე.",
+        text: "წყალი. ფქვილი. დრო. რბილი ცომიდან თხელ, ოთხკუთხედ ძირამდე.",
         detail: "30 × 30 სმ",
       },
       {
@@ -110,7 +110,7 @@ export const copy = {
     begin: "Let's make it",
     viewMenu: "View menu",
     scene:
-      "Flour, hand-worked dough, toppings, the oven, the first slice and a branded 90pizza box",
+      "Flour, thin square dough, toppings, the oven, nine portions and a branded 90pizza box",
     chapters: [
       {
         label: "Flour",
@@ -120,8 +120,8 @@ export const copy = {
       },
       {
         label: "Dough",
-        title: "Good taste\nstarts by hand.",
-        text: "Water. Flour. The warmth of hands. Soft dough becomes a thin square base.",
+        title: "From flour.\nInto form.",
+        text: "Water. Flour. Time. Soft dough becomes a thin square base.",
         detail: "30 × 30 cm",
       },
       {

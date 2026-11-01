@@ -1,0 +1,104 @@
+.dt-atelier-stage {
+  background: #111512;
+  --dt-scene-ink: #fff;
+}
+.dt-root:has(.dt-atelier-stage) .dt-header { background: #101410ed; color: #fff; border-bottom-color: #ffffff14; }
+.dt-root:has(.dt-atelier-stage) .dt-mobile-nav { background: #101410; color: #fff; }
+.dt-root:has(.dt-atelier-stage) .dt-mobile-nav a { border-bottom-color: #ffffff20; }
+.dt-root:has(.dt-atelier-stage) .dt-language button { color: #c5cac2; }
+.dt-root:has(.dt-atelier-stage) .dt-language button[aria-pressed="true"] { color: #fff; }
+.dt-atelier-stage .dt-scene-tools { background: transparent; }
+.dt-atelier-stage .dt-story-rail { background: #101410c9; border-top-color: #ffffff20; }
+.dt-atelier-stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, #0b0e0bf0, #0b0e0b72 25%, transparent 55%),
+    linear-gradient(0deg, #0b0e0bd6, transparent 25%);
+}
+.dt-atelier-stage .dt-story-copy,
+.dt-atelier-stage .dt-hero-copy {
+  top: 34%;
+  left: 40px;
+  right: auto;
+  width: 31%;
+  max-width: 450px;
+  text-align: left;
+}
+.dt-atelier-stage .dt-hero-copy h1 { font-size: 88px; }
+.dt-atelier-stage .dt-hero-copy h1 > span { font-size: 24px; right: -19px; top: 7px; }
+.dt-atelier-stage .dt-hero-copy .dt-hero-line {
+  font-size: 24px;
+  line-height: 1.5;
+  margin: 24px 0 0;
+  max-width: 300px;
+  padding: 0;
+  color: #fff;
+}
+.dt-atelier-stage .dt-story-copy h2 { font-size: 42px; line-height: 1.3; }
+.dt-atelier-stage .dt-story-copy > p { font-size: 15px; line-height: 1.8; color: #c8cbc4; }
+.dt-atelier-stage .dt-chapter-label { color: #f56558; margin-bottom: 20px; }
+.dt-atelier-stage .dt-stage-actions { left: 40px; right: auto; align-items: flex-start; }
+.dt-atelier-stage .dt-icon { background: #ffffff0d; border-color: #ffffff26; color: white; }
+.dt-atelier-stage .dt-icon:hover { background: #ffffff21; }
+.dt-atelier-stage .dt-story-rail { color: #fff; }
+.dt-atelier-stage .dt-story-rail button { color: #c8cbc4; }
+.dt-atelier-stage .dt-story-rail button[aria-current="step"] { color: #fff; }
+.dt-atelier-stage .dt-scene-fallback { object-fit: cover; }
+.dt-atelier[data-state="loading"] .dt-scene-fallback { opacity: .45; }
+@media (min-width: 1600px) {
+  .dt-atelier-stage .dt-hero-copy h1 { font-size: 112px; }
+  .dt-atelier-stage .dt-story-copy h2 { font-size: 52px; }
+}
+@media (max-width: 1050px) and (min-width: 768px) {
+  .dt-atelier-stage .dt-hero-copy h1 { font-size: 64px; }
+  .dt-atelier-stage .dt-story-copy h2 { font-size: 32px; }
+  .dt-atelier-stage .dt-story-copy > p { font-size: 13px; }
+}
+@media (max-width: 767px) {
+  .dt-atelier-stage { min-height: 600px; }
+  .dt-atelier-stage::after {
+    background: linear-gradient(180deg, #0b0e0bd9, transparent 43%, transparent 72%, #0b0e0be6);
+  }
+  .dt-atelier-stage .dt-stage-top { top: 84px; left: 20px; right: 20px; }
+  .dt-atelier-stage .dt-story-copy,
+  .dt-atelier-stage .dt-story-copy:not(.dt-hero-copy),
+  .dt-atelier-stage .dt-hero-copy {
+    top: 136px; left: 20px; right: 20px; width: auto; max-width: none;
+  }
+  .dt-atelier-stage .dt-hero-copy h1 { font-size: 64px; }
+  .dt-atelier-stage .dt-hero-copy .dt-hero-line { font-size: 19px; margin: 12px 0 0; max-width: none; }
+  .dt-atelier-stage .dt-story-copy h2 { font-size: 28px; line-height: 1.35; white-space: normal; max-width: 350px; }
+  .dt-atelier-stage .dt-chapter-label { margin-bottom: 12px; font-size: 11px; }
+  .dt-atelier-stage .dt-story-copy > p:not(.dt-hero-line) { display: none; }
+  .dt-atelier-stage .dt-stage-actions {
+    left: 20px; right: 20px; bottom: 92px; flex-direction: row; justify-content: space-between; align-items: center;
+  }
+  .dt-atelier-stage .dt-primary { min-height: 46px; padding: 12px 16px; font-size: 12px; }
+  .dt-atelier-stage .dt-scene-tools { gap: 6px; }
+  .dt-atelier-stage .dt-icon { width: 38px; height: 38px; }
+}
+@media (max-height: 700px) and (max-width: 767px) {
+  .dt-atelier-stage { min-height: 100svh; }
+  .dt-atelier-stage .dt-story-copy,
+  .dt-atelier-stage .dt-story-copy:not(.dt-hero-copy),
+  .dt-atelier-stage .dt-hero-copy { top: 120px; }
+  .dt-atelier-stage .dt-hero-copy h1 { font-size: 52px; }
+  .dt-atelier-stage .dt-story-copy h2 { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dt-atelier canvas,
+  .dt-rendered-story canvas { transition: none; }
+}
+@media (max-height: 540px) and (min-width: 600px) {
+  .dt-atelier-stage .dt-story-copy,
+  .dt-atelier-stage .dt-story-copy:not(.dt-hero-copy),
+  .dt-atelier-stage .dt-hero-copy { top: 98px; }
+  .dt-atelier-stage .dt-story-copy h2 { font-size: 26px; line-height: 1.25; }
+  .dt-atelier-stage .dt-chapter-label { margin-bottom: 10px; }
+  .dt-atelier-stage .dt-story-copy > p:not(.dt-hero-line) { display: none; }
+  .dt-atelier-stage .dt-hero-copy h1 { font-size: 48px; }
+  .dt-atelier-stage .dt-hero-copy .dt-hero-line { font-size: 16px; margin-top: 8px; }
+}

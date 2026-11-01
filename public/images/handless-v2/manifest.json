@@ -1,0 +1,17 @@
+{
+  "count": 360,
+  "expected": 360,
+  "desktop": [
+    1440,
+    1080
+  ],
+  "mobile": [
+    900,
+    900
+  ],
+  "renderer": "Blender Cycles",
+  "samples": 48,
+  "adaptiveThreshold": 0.035,
+  "hands": false,
+  "sourceDuration": 52
+}

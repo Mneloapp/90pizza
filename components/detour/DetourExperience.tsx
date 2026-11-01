@@ -18,9 +18,13 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { clamp } from "./scene-math";
-import StoryFilm, { filmChapter, filmTargets, STORY_VIDEO } from "./StoryFilm";
+import dynamic from "next/dynamic";
+import { atelierChapter, atelierTargets } from "./atelier-timeline";
 import { copy, flavors, type Language } from "./content";
 import "./detour.css";
+import "./atelier.css";
+
+const RenderedStory = dynamic(() => import("./RenderedStory"), { ssr: false });
 
 function LanguageSwitch({
   language,
@@ -90,7 +94,7 @@ export default function DetourExperience() {
       progress.current = clamp(-rect.top / Math.max(distance, 1));
       if (progressLine.current)
         progressLine.current.style.transform = `scaleX(${progress.current})`;
-      setChapter(filmChapter(progress.current));
+      setChapter(atelierChapter(progress.current));
     };
     const scroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -139,7 +143,7 @@ export default function DetourExperience() {
       top:
         top +
         (story.current.offsetHeight - window.innerHeight) *
-          filmTargets[index],
+          atelierTargets[index],
       behavior: reduced ? "instant" : "smooth",
     });
   };
@@ -197,11 +201,11 @@ export default function DetourExperience() {
 
       <main id="top">
         <section ref={story} className="dt-story" aria-label={t.story}>
-          <div className="dt-stage dt-film-stage" data-chapter={chapter}>
+          <div className="dt-stage dt-atelier-stage" data-chapter={chapter}>
             {dataSaver === null ? (
               <div className="dt-scene-loading" aria-hidden="true" />
             ) : (
-              <StoryFilm
+              <RenderedStory
                 progress={progress}
                 replay={replay}
                 paused={paused}
@@ -258,9 +262,6 @@ export default function DetourExperience() {
               )}
               {dataSaver !== null && (
                 <div className="dt-scene-tools">
-                  <a className="dt-icon" href={STORY_VIDEO} target="_blank" rel="noopener noreferrer" title={t.watchFilm} aria-label={t.watchFilm}>
-                    <Play size={18} />
-                  </a>
                   <button
                     className="dt-icon"
                     title={t.replay}
