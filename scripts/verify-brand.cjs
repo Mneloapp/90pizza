@@ -42,6 +42,8 @@ async function check(type, name, viewport, options = {}) {
     assert.equal(await page.locator('.bp-size-overview').getAttribute('href'), '#square');
     assert.deepEqual(await page.locator('.bp-format-sizes strong').allTextContents(), ['33×33', '23×23', '12×12']);
     await page.locator('.bp-hero-image img').evaluate(img => img.decode());
+    const heroImage = await page.locator('.bp-hero-image img').evaluate(img => img.currentSrc);
+    assert.match(heroImage, /hero-(mobile-(600|900)|desktop-v2-1536)\.avif$/);
     assert.equal(await page.locator('.bp-hero-image img').evaluate(el => getComputedStyle(el).animationName), 'none');
     assert.equal(await page.locator('.bp-reveal[data-reveal-state=pending]').count(), 0);
     const heroPixels = await sharp(await page.locator('.bp-hero').screenshot()).stats();
@@ -56,6 +58,11 @@ async function check(type, name, viewport, options = {}) {
     await page.screenshot({ path: `${out}/${name}-hero-ge.png` });
     await page.locator('.bp-hero-action').click();
     await page.locator('.bp-pizza-photo').first().waitFor({ state: 'visible' });
+    const menuImage = await page.locator('.bp-pizza-photo img').first().evaluate(async img => {
+      await img.decode();
+      return img.currentSrc;
+    });
+    assert.match(menuImage, /-(360|540|720)\.avif$/);
     assert.equal(await page.locator('.bp-pizza').count(), 6);
     assert.equal(new Set(await page.locator('.bp-pizza-photo img').evaluateAll(imgs => imgs.map(i => i.src))).size, 6);
     await page.locator('.bp-filters button').nth(1).click();

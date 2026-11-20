@@ -27,6 +27,21 @@ import { copy, dimensionList, languagePaths, openingDate, pizzaDimensions, pizza
 import "./brand.css";
 
 const selectionKey = "90pizza:favorite:v1";
+const mobileHeroMedia = "(max-width: 700px), (max-width: 1000px) and (max-aspect-ratio: 4/5)";
+const menuImageSizes = [
+  "(max-width: 359px) calc(100vw - 32px)",
+  "(max-width: 480px) calc((100vw - 56px) / 2)",
+  "(max-width: 700px) calc((100vw - 60px) / 2)",
+  "(max-width: 900px) calc((100vw - 96px) / 2)",
+  "(max-width: 1150px) calc((100vw - 120px) / 3)",
+  "(max-width: 1632px) calc((100vw - 160px) / 3)",
+  "491px",
+].join(", ");
+
+function pizzaAvifSources(image: string) {
+  const base = image.replace(/\.webp$/, "");
+  return [360, 540, 720].map((width) => `${base}-${width}.avif ${width}w`).join(", ");
+}
 
 function LanguageSwitch({ language }: { language: Language }) {
   return (
@@ -190,8 +205,9 @@ export default function BrandExperience({ language }: { language: Language }) {
         }} onPointerLeave={() => { dx.set(0); dy.set(0); }}>
           <motion.div className="bp-hero-image" style={{ x: reduced ? 0 : heroX, y: reduced ? 0 : heroY }}>
             <picture>
-              <source media="(max-width: 700px)" srcSet="/images/brand/hero-mobile.webp" />
-              <source media="(max-width: 1000px) and (max-aspect-ratio: 4/5)" srcSet="/images/brand/hero-mobile.webp" />
+              <source type="image/avif" media={mobileHeroMedia} sizes="100vw" srcSet="/images/brand/hero-mobile-600.avif 600w, /images/brand/hero-mobile-900.avif 900w" />
+              <source media={mobileHeroMedia} srcSet="/images/brand/hero-mobile.webp" />
+              <source type="image/avif" srcSet="/images/brand/hero-desktop-v2-1536.avif" />
               <img src="/images/brand/hero-desktop-v2.webp" alt={t.heroAlt} width={1536} height={1024} fetchPriority="high" />
             </picture>
           </motion.div>
@@ -237,7 +253,10 @@ export default function BrandExperience({ language }: { language: Language }) {
                   <motion.article key={pizza.id} className="bp-pizza" layout={!reduced} initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reduced ? 0 : .24 }}>
                     <div className="bp-pizza-reveal bp-reveal">
                     <button className="bp-pizza-photo" onClick={(event) => openPizza(pizza.id, event.currentTarget)} aria-label={`${pizza[language].name}: ${t.details}`}>
-                      <img src={pizza.image} alt={`${t.pizzaAlt} ${pizza[language].name}`} width={720} height={720} loading="lazy" decoding="async" />
+                      <picture>
+                        <source type="image/avif" srcSet={pizzaAvifSources(pizza.image)} sizes={menuImageSizes} />
+                        <img src={pizza.image} alt={`${t.pizzaAlt} ${pizza[language].name}`} width={720} height={720} loading="lazy" decoding="async" />
+                      </picture>
                       <span className="bp-pizza-number">{pizza.number}</span>
                       {pickedId === pizza.id && <span className="bp-picked"><Check size={15} />{t.chosen}</span>}
                       <span className="bp-photo-open"><Plus size={23} /></span>
@@ -288,7 +307,12 @@ export default function BrandExperience({ language }: { language: Language }) {
         </section>
 
         <section className="bp-bite">
-          <div className="bp-bite-image"><img src="/images/brand/pepperoni.webp" width={720} height={720} alt={t.biteAlt} loading="lazy" /></div>
+          <div className="bp-bite-image">
+            <picture>
+              <source type="image/avif" srcSet={pizzaAvifSources("/images/brand/pepperoni.webp")} sizes="(max-width: 700px) 100vw, 50vw" />
+              <img src="/images/brand/pepperoni.webp" width={720} height={720} alt={t.biteAlt} loading="lazy" decoding="async" />
+            </picture>
+          </div>
           <div className="bp-bite-copy bp-reveal">
             <span className="bp-eyebrow">90° / {t.biteEyebrow}</span>
             <h2>{t.biteTitle}</h2>

@@ -11,6 +11,8 @@ Planned opening: **15 December 2026**. Tbilisi, delivery only; no public storefr
 
 ## Search Console
 
+**Activated 20 November 2026:** Google verified the `90pizza.ge` Domain property via DNS. The production sitemap shows Success with two discovered pages, and URL Inspection confirmed the Georgian homepage was already indexed. Retain the DNS verification record.
+
 1. Sign in with the brand's Google account. Use the existing `90pizza.ge` Domain property if present; otherwise add it.
 2. Add only the exact TXT value Google provides to Vercel DNS at the domain apex. Keep existing DNS records untouched. For a URL-prefix property only, `GOOGLE_SITE_VERIFICATION` can hold the HTML meta tag's `content` value (not the entire tag); it requires a new build.
 3. Verify ownership in Search Console, submit `https://www.90pizza.ge/sitemap.xml`, then run URL Inspection against `/` and `/en`. Request indexing after the live test succeeds. Submission and verification do not guarantee indexing or placement.
