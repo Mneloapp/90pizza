@@ -38,6 +38,9 @@ async function check(type, name, viewport, options = {}) {
     const opening = page.locator('.bp-hero-opening');
     assert.equal(await opening.locator('time').getAttribute('datetime'), '2026-12-15');
     assert.equal(await opening.getAttribute('href'), '#delivery');
+    assert.equal(await page.locator('.bp-size-overview strong').innerText(), '33×33 / 23×23 / 12×12');
+    assert.equal(await page.locator('.bp-size-overview').getAttribute('href'), '#square');
+    assert.deepEqual(await page.locator('.bp-format-sizes strong').allTextContents(), ['33×33', '23×23', '12×12']);
     await page.locator('.bp-hero-image img').evaluate(img => img.decode());
     assert.equal(await page.locator('.bp-hero-image img').evaluate(el => getComputedStyle(el).animationName), 'none');
     assert.equal(await page.locator('.bp-reveal[data-reveal-state=pending]').count(), 0);
@@ -67,6 +70,8 @@ async function check(type, name, viewport, options = {}) {
       assert(await page.locator('.bp-dialog').evaluate(el => el.open));
       assert(await page.locator('#bp-dialog-title').innerText());
       assert(await page.locator('.bp-dialog-copy small').innerText());
+      assert.equal(await page.locator('.bp-dialog-specs strong').innerText(), '33×33, 23×23, 12×12 სმ');
+      assert.equal(await page.locator('.bp-dialog-specs span').innerText(), '9 თანაბარი ნაჭერი');
       await page.locator('.bp-dialog-copy > .bp-action').click();
       assert(!(await page.locator('.bp-dialog').evaluate(el => el.open)));
       assert.notEqual(await page.locator('body').evaluate(el => el.style.overflow), 'hidden');
@@ -107,6 +112,8 @@ async function check(type, name, viewport, options = {}) {
       assert.equal(await page.locator('#bp-mobile-nav').count(), 0);
     }
     await page.locator('.bp-pizza-photo').first().click();
+    assert.equal(await page.locator('.bp-dialog-specs strong').innerText(), '33×33, 23×23, 12×12 cm');
+    assert.equal(await page.locator('.bp-dialog-specs span').innerText(), '9 equal slices');
     await page.keyboard.press('Escape');
     assert(!(await page.locator('.bp-dialog').evaluate(el => el.open)));
     await page.reload({ waitUntil: 'networkidle' });

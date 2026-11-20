@@ -4,6 +4,7 @@ const sharp = require('sharp');
 
 const base = process.env.QA_URL || 'http://127.0.0.1:3145';
 const canonicalBase = 'https://www.90pizza.ge';
+const sizes = ['33×33', '23×23', '12×12'];
 const preview = process.env.QA_EXPECT_NOINDEX === '1';
 const url = (path) => new URL(path, base).href;
 
@@ -36,7 +37,12 @@ async function main() {
       assert.equal(new URL(await head.locator('link[rel=canonical]').getAttribute('href')).href, canonical);
       assert.deepEqual(await head.locator('link[rel=alternate][hreflang]').evaluateAll((links) =>
         Object.fromEntries(links.map((link) => [link.hreflang, link.href]))), alternates);
-      assert.match(await head.locator('meta[name=description]').getAttribute('content'), new RegExp(location));
+      const description = await head.locator('meta[name=description]').getAttribute('content');
+      assert.match(description, new RegExp(location));
+      for (const size of sizes) assert(description.includes(size));
+      assert.doesNotMatch(description, /30\s*[×x]\s*30/);
+      assert.deepEqual(await page.locator('.bp-format-sizes strong').allTextContents(), sizes);
+      assert.doesNotMatch(await page.locator('.bp-root').textContent(), /30\s*[×x]\s*30/);
       assert.equal(new URL(await head.locator('meta[property="og:url"]').getAttribute('content')).href, canonical);
       assert.equal(await head.locator('meta[property="og:image"]').getAttribute('content'), `${canonicalBase}/images/brand/share.jpg`);
       assert.equal(await head.locator('meta[name="twitter:card"]').getAttribute('content'), 'summary_large_image');
@@ -58,6 +64,7 @@ async function main() {
       assert.equal(graph.WebPage.isPartOf['@id'], graph.WebSite['@id']);
       assert.equal(graph.WebPage.url, canonical);
       assert.equal(graph.WebPage.inLanguage, lang);
+      assert.equal(graph.WebPage.description, description);
       assert.equal(graph.LocalBusiness, undefined);
     }
     assert.equal(new Set(titles).size, 2);

@@ -23,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { copy, languagePaths, openingDate, pizzas, type Filter, type Language } from "./content";
+import { copy, dimensionList, languagePaths, openingDate, pizzaDimensions, pizzas, type Filter, type Language } from "./content";
 import "./brand.css";
 
 const selectionKey = "90pizza:favorite:v1";
@@ -212,8 +212,8 @@ export default function BrandExperience({ language }: { language: Language }) {
 
         <div className="bp-spec-strip">
           <span><CornerDownRight size={19} /><strong>90°</strong><span>{t.squarePizza}</span></span>
-          <span><strong>30×30</strong><span>{t.centimeters}</span></span>
-          <span><Grid3X3 size={18} /><span>{t.nineSlices}</span></span>
+          <a className="bp-size-overview" href="#square"><strong>{pizzaDimensions.join(" / ")}</strong><span>{t.centimeters}</span></a>
+          <span className="bp-slice-spec"><Grid3X3 size={18} /><span>{t.nineSlices}</span></span>
           <span className="bp-share-spec"><ArrowUpRight size={18} />{t.madeToShare}</span>
         </div>
 
@@ -229,7 +229,7 @@ export default function BrandExperience({ language }: { language: Language }) {
                   <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{t.filters[value]}<span>{value === "all" ? "06" : value === "meat" ? "02" : "04"}</span></button>
                 ))}
               </div>
-              <span className="bp-menu-format">30×30 {t.centimeters}<span> / </span>{t.nineSlices}</span>
+              <span className="bp-menu-format">{dimensionList} {t.centimeters}</span>
             </div>
             <div className="bp-pizza-grid" aria-live="polite">
               <AnimatePresence mode="popLayout" initial={false}>
@@ -260,7 +260,9 @@ export default function BrandExperience({ language }: { language: Language }) {
               <span className="bp-eyebrow">02 / {t.formatEyebrow}</span>
               <h2>{t.formatTitle}</h2>
               <p>{t.formatText}</p>
-              <div className="bp-format-number">30<span>×</span>30<small>{t.centimeters}</small></div>
+              <ul className="bp-format-sizes" aria-label={t.sizes}>
+                {pizzaDimensions.map((size) => <li key={size}><strong>{size}</strong> <span>{t.centimeters}</span></li>)}
+              </ul>
               <a className="bp-text-action" href="#menu">{t.chooseFlavor}<ArrowUpRight size={18} /></a>
             </div>
             <div className="bp-square-visual">
@@ -272,8 +274,6 @@ export default function BrandExperience({ language }: { language: Language }) {
                     return <motion.div key={index} className="bp-slice" aria-hidden="true" style={{ backgroundPosition: `${x * 50}% ${y * 50}%` }} initial={false} animate={{ x: split ? (x - 1) * 13 : 0, y: split ? (y - 1) * 13 : 0, rotate: split ? (x - y) * .65 : 0 }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 110, damping: 17, delay: index * .018 }} />;
                   })}
                 </div>
-                <div className="bp-dimension bp-dimension-x" aria-hidden="true"><span>30 {t.centimeters}</span></div>
-                <div className="bp-dimension bp-dimension-y" aria-hidden="true"><span>30 {t.centimeters}</span></div>
               </div>
               <div className="bp-square-bottom">
                 <div className="bp-segmented" role="group" aria-label={t.format}>
@@ -332,7 +332,7 @@ export default function BrandExperience({ language }: { language: Language }) {
       </footer>
 
       <div className="bp-mobile-dock">
-        <span>{picked ? t.selected : "30×30"}<strong>{picked ? picked[language].name : t.nineSlices}</strong></span>
+        <span>{picked ? t.selected : t.threeSizes}<strong>{picked ? picked[language].name : t.nineSlices}</strong></span>
         <a href={picked ? "#delivery" : "#menu"}>{picked ? t.delivery : t.mobileAction}<ArrowUpRight size={20} /></a>
       </div>
       <div className="bp-selection-status" role="status" aria-live="polite">{picked ? `${picked[language].name}: ${t.selectedNotice}` : ""}</div>
@@ -345,7 +345,7 @@ export default function BrandExperience({ language }: { language: Language }) {
             <span className="bp-eyebrow">{detail[language].mood}</span>
             <h2 id="bp-dialog-title">{detail[language].name}</h2>
             <p>{detail[language].ingredients}</p>
-            <div className="bp-dialog-specs"><span>30×30 {t.centimeters}</span><span>{t.nineSlices}</span></div>
+            <div className="bp-dialog-specs"><strong>{dimensionList} {t.centimeters}</strong><span>{t.nineSlices}</span></div>
             <button className="bp-action bp-action-red" onClick={() => choosePizza(detail.id)}>{pickedId === detail.id ? t.chosen : t.choose}{pickedId === detail.id ? <Check size={21} /> : <ArrowRight size={21} />}</button>
             <small>{t.orderNote}</small>
           </div>
